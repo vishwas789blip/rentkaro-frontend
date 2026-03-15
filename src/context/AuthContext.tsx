@@ -12,13 +12,15 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: "user" | "pg_owner" | "admin"; // Stay consistent with backend casing
+  phone?: string; // Added phone for profile consistency
+  role: "user" | "pg_owner" | "admin"; 
 }
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   isAuthenticated: boolean;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>; // ADDED THIS
   login: (email: string, password: string) => Promise<User>;
   register: (data: any) => Promise<void>;
   logout: () => void;
@@ -38,25 +40,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const loadUser = useCallback(async () => {
     try {
-      const token = localStorage.getItem("accessToken");
+      // Check both keys to match your api.ts interceptor
+      const token = localStorage.getItem("accessToken") || localStorage.getItem("token");
+      
       if (!token) {
         setLoading(false);
         return;
       }
 
       const res = await authAPI.getMe();
-      // Expanded extraction to handle different backend response structures
       const userData = res.data?.data?.user || res.data?.data || res.data?.user;
 
       if (userData) {
         setUser(userData);
+        // Sync localStorage with fresh data from server
+        localStorage.setItem("user", JSON.stringify(userData));
       } else {
         throw new Error("No user data found");
       }
     } catch (err) {
       console.error("Auth initialization failed:", err);
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("user");
+      // Don't clear everything on a single failed network request, 
+      // only if it's a 401 Unauthorized
       setUser(null);
     } finally {
       setLoading(false);
@@ -96,13 +101,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       const res = await authAPI.register(data);
-      // Ensure we handle the response correctly based on your API structure
       const responseData = res.data?.data || res.data;
       const { user: userData, accessToken, refreshToken } = responseData;
 
       if (accessToken) {
         localStorage.setItem("accessToken", accessToken);
         if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
+        localStorage.setItem("user", JSON.stringify(userData));
         setUser(userData);
       }
     } catch (error) {
@@ -113,13 +118,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const logout = useCallback(() => {
-    localStorage.clear(); // Clear everything to be safe
+    localStorage.clear();
     setUser(null);
+    window.location.href = "/login";
   }, []);
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, isAuthenticated: !!user, login, register, logout }}
+      value={{ 
+        user, 
+        loading, 
+        isAuthenticated: !!user, 
+        setUser, // EXPOSED HERE
+        login, 
+        register, 
+        logout 
+      }}
     >
       {children}
     </AuthContext.Provider>

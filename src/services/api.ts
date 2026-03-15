@@ -1,5 +1,3 @@
-// src/services/api.ts
-
 import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
 
 /* =====================================================
@@ -53,12 +51,37 @@ interface Review {
   createdAt: string;
 }
 
+interface Listing {
+  _id: string;
+  title: string;
+  description: string;
+  pricePerMonth: number;
+
+  address: {
+    street: string;
+    city: string;
+    state: string;
+    pincode: string;
+  };
+
+  rooms: {
+    availableRooms: number;
+    roomType: "single" | "double" | "triple" | "quad";
+  };
+
+  images: {
+    url: string;
+    publicId: string;
+  }[];
+
+  amenities: string[];
+}
 /* =====================================================
    Axios Instance
 ===================================================== */
 
 const apiClient = axios.create({
-  baseURL: `${import.meta.env.VITE_API_URL}/api/v1`,
+  baseURL: `${import.meta.env.VITE_API_URL}/api/v1` || "http://localhost:5000/api/v1",
   withCredentials: true,
 });
 
@@ -67,10 +90,10 @@ const apiClient = axios.create({
 ===================================================== */
 
 apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem("accessToken");
-
+  const token =
+    localStorage.getItem("accessToken") ||
+    localStorage.getItem("token");
   if (token) {
-    // Correct way to set headers in newer Axios
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
@@ -136,21 +159,28 @@ apiClient.interceptors.response.use(
   }
 );
 
-
-
-
 /* =====================================================
    AUTH API
 ===================================================== */
 
 export const authAPI = {
   login: (data: LoginData) => apiClient.post("/auth/login", data),
+  
   register: (data: RegisterData) => apiClient.post("/auth/register", data),
-  getMe: () => apiClient.get("/auth/me"), // Simplified
-
-
+  
+  getMe: () => apiClient.get("/auth/me"),
+  
   verifyEmail: (userId: string) =>
     apiClient.get(`/auth/verify-email/${userId}`),
+
+  sendPasswordResetOTP: (email: string) =>
+    apiClient.post("/auth/forgot-password-otp", { email }),
+
+  verifyOTP: (data: { email: string; otp: string }) =>
+    apiClient.post("/auth/verify-otp", data),
+
+  resetPasswordWithOTP: (data: { email: string; otp: string; password: any }) =>
+    apiClient.post("/auth/reset-password-otp", data),
 
   forgotPassword: (email: string) =>
     apiClient.post("/auth/forgot-password", { email }),
@@ -183,8 +213,10 @@ export const listingAPI = {
     }),
 
   getOwnerListings: () =>
-    apiClient.get<{ data: Listing[] }>("/pg-listings/owner/my-listings"),
-
+  apiClient.get<{ success: boolean; data: Listing[] }>(
+    "/pg-listings/owner/my-listings"
+  ),
+  
   /* ================= UPDATE LISTING ================= */
 
   update: (id: string, data: FormData) =>
@@ -229,10 +261,7 @@ export const bookingAPI = {
    USERS API
 ===================================================== */
 
-
 export const userAPI = {
-
-  /* ================= USER ================= */
 
   getProfile: () =>
     apiClient.get("/auth/me"),
@@ -246,9 +275,7 @@ export const userAPI = {
   deleteAccount: () =>
     apiClient.delete("/users/account"),
 
-
   /* ================= ADMIN ================= */
-
   getAllUsers: () =>
     apiClient.get("/admin/users"),
 
@@ -309,9 +336,5 @@ export const wishlistAPI = {
   removeFromWishlist: (listingId: string) =>
     apiClient.delete(`/wishlist/${listingId}`),
 };
-
-/* =====================================================
-   Export Axios Instance
-===================================================== */
 
 export default apiClient;

@@ -10,8 +10,15 @@ import { listingAPI } from "@/services/api";
 import { toast } from "sonner";
 
 const amenitiesList = [
-  "WiFi", "AC", "Parking", "Laundry", "Kitchen", 
-  "Garden", "Gym", "Security", "Electricity Bill"
+  { label: "WiFi", value: "wifi" },
+  { label: "AC", value: "ac" },
+  { label: "Parking", value: "parking" },
+  { label: "Laundry", value: "laundry" },
+  { label: "Kitchen", value: "kitchen" },
+  { label: "Garden", value: "garden" },
+  { label: "Gym", value: "gym" },
+  { label: "Security", value: "security" },
+  { label: "Electricity Bill", value: "electricity bill" }
 ];
 
 const CreateListing = () => {
@@ -177,16 +184,20 @@ const CreateListing = () => {
             <div className="bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm space-y-6">
               <h2 className="text-xl font-bold text-gray-900">Amenities</h2>
               <div className="flex flex-wrap gap-2">
-                {amenitiesList.map((a) => (
-                  <button
-                    key={a} type="button" onClick={() => toggleAmenity(a)}
-                    className={`px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-tight transition-all ${
-                      selectedAmenities.includes(a) ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/20" : "bg-gray-50 text-gray-400 hover:bg-gray-100"
-                    }`}
-                  >
-                    {a}
-                  </button>
-                ))}
+{amenitiesList.map((a) => (
+  <button
+    key={a.value}
+    type="button"
+    onClick={() => toggleAmenity(a.value)}
+    className={`px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-tight transition-all ${
+      selectedAmenities.includes(a.value)
+        ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/20"
+        : "bg-gray-50 text-gray-400 hover:bg-gray-100"
+    }`}
+  >
+    {a.label}
+  </button>
+))}
               </div>
             </div>
           </div>

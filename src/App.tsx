@@ -45,7 +45,7 @@ const Register = lazy(() => import("./pages/Register"));
 const Listings = lazy(() => import("./pages/Listings"));
 const ListingDetail = lazy(() => import("./pages/ListingDetail"));
 
-const UserDashboard = lazy(() => import("./pages/users/UserDashboard"));
+const UserDashboard = lazy(() => import("./pages/users/Profile"));
 const OwnerDashboard = lazy(() => import("./pages/pg_Owner/OwnerDashboard"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 
@@ -75,6 +75,7 @@ const MyBookings = lazy(() => import("./pages/users/MyBookings"));
 
 const NotFound = lazy(() => import("./pages/NotFound"));
 const EditListing = lazy(() => import("./pages/pg_Owner/EditListing"));
+const OwnerListings = lazy(() => import("./pages/pg_Owner/OwnerListings")); // Adjust path if needed
 
 /* ================================
    Loading Component
@@ -125,7 +126,7 @@ const App = () => {
                   <Route
                     path="/booking/:id"
                     element={
-                      <ProtectedRoute allowedRoles={["USER"]}>
+                      <ProtectedRoute allowedRoles={["user"]}>
                         <BookingPage />
                       </ProtectedRoute>
                     }
@@ -136,7 +137,7 @@ const App = () => {
                   <Route
                     path="/dashboard/user"
                     element={
-                      <ProtectedRoute allowedRoles={["USER"]}>
+                      <ProtectedRoute allowedRoles={["user"]}>
                         <UserDashboard />
                       </ProtectedRoute>
                     }
@@ -145,7 +146,7 @@ const App = () => {
                   <Route
                     path="/dashboard/user/bookings"
                     element={
-                      <ProtectedRoute allowedRoles={["USER"]}>
+                      <ProtectedRoute allowedRoles={["user"]}>
                         <MyBookings />
                       </ProtectedRoute>
                     }
@@ -154,7 +155,7 @@ const App = () => {
                   <Route
                     path="/dashboard/user/settings"
                     element={
-                      <ProtectedRoute allowedRoles={["USER"]}>
+                      <ProtectedRoute allowedRoles={["user"]}>
                         <UserSettings />
                       </ProtectedRoute>
                     }
@@ -165,7 +166,7 @@ const App = () => {
                   <Route
                     path="/dashboard/owner"
                     element={
-                      <ProtectedRoute allowedRoles={["PG_OWNER"]}>
+                      <ProtectedRoute allowedRoles={["pg_owner", ]}>
                         <OwnerDashboard />
                       </ProtectedRoute>
                     }
@@ -174,7 +175,7 @@ const App = () => {
                   <Route
                     path="/dashboard/owner/create"
                     element={
-                      <ProtectedRoute allowedRoles={["PG_OWNER", "ADMIN"]}>
+                      <ProtectedRoute allowedRoles={["pg_owner", "admin"]}>
                         <CreateListing />
                       </ProtectedRoute>
                     }
@@ -183,18 +184,27 @@ const App = () => {
                   <Route
                     path="/owner/listings/:id/edit"
                     element={
-                      <ProtectedRoute allowedRoles={["PG_OWNER", "ADMIN"]}>
+                      <ProtectedRoute allowedRoles={["pg_owner", "admin"]}>
                         <EditListing />
                       </ProtectedRoute>
                     }
                   />
+
+                  <Route
+  path="/dashboard/owner/listings"
+  element={
+    <ProtectedRoute allowedRoles={["pg_owner"]}>
+      <OwnerListings />
+    </ProtectedRoute>
+  }
+/>
 
                   {/* ================= ADMIN DASHBOARD ================= */}
 
                   <Route
                     path="/dashboard/admin"
                     element={
-                      <ProtectedRoute allowedRoles={["ADMIN"]}>
+                      <ProtectedRoute allowedRoles={["admin"]}>
                         <AdminDashboard />
                       </ProtectedRoute>
                     }
@@ -203,7 +213,7 @@ const App = () => {
                   <Route
                     path="/dashboard/admin/listings"
                     element={
-                      <ProtectedRoute allowedRoles={["ADMIN"]}>
+                      <ProtectedRoute allowedRoles={["admin"]}>
                         <AllListings />
                       </ProtectedRoute>
                     }
@@ -212,7 +222,7 @@ const App = () => {
                   <Route
                     path="/dashboard/admin/analytics"
                     element={
-                      <ProtectedRoute allowedRoles={["ADMIN"]}>
+                      <ProtectedRoute allowedRoles={["admin"]}>
                         <Analytics />
                       </ProtectedRoute>
                     }
@@ -221,7 +231,7 @@ const App = () => {
                   <Route
                     path="/dashboard/admin/support"
                     element={
-                      <ProtectedRoute allowedRoles={["ADMIN"]}>
+                      <ProtectedRoute allowedRoles={["admin"]}>
                         <AdminSupport />
                       </ProtectedRoute>
                     }
