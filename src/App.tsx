@@ -173,7 +173,7 @@ const App = () => {
                   />
 
                   <Route
-                    path="/dashboard/owner/create"
+                    path="/dashboard/owner/createListing"
                     element={
                       <ProtectedRoute allowedRoles={["pg_owner", "admin"]}>
                         <CreateListing />
@@ -181,23 +181,22 @@ const App = () => {
                     }
                   />
 
-                  <Route
-                    path="/owner/listings/:id/edit"
-                    element={
-                      <ProtectedRoute allowedRoles={["pg_owner", "admin"]}>
-                        <EditListing />
-                      </ProtectedRoute>
-                    }
-                  />
-
-                  <Route
-  path="/dashboard/owner/listings"
+<Route
+  path="/dashboard/owner/edit-listing/:id"
   element={
-    <ProtectedRoute allowedRoles={["pg_owner"]}>
-      <OwnerListings />
+    <ProtectedRoute allowedRoles={["pg_owner", "admin"]}>
+      <EditListing />
     </ProtectedRoute>
   }
 />
+                  <Route
+                    path="/dashboard/owner/listings"
+                    element={
+                    <ProtectedRoute allowedRoles={["pg_owner"]}>
+                      <OwnerListings />
+                      </ProtectedRoute>
+                    }
+                />
 
                   {/* ================= ADMIN DASHBOARD ================= */}
 

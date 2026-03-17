@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { ArrowRight, Mail, Home, Eye, EyeOff, Lock, Loader2, ShieldCheck, Zap } from "lucide-react";
+import { ArrowRight, Mail, Eye, EyeOff, Lock, Loader2, ShieldCheck, Zap, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Login() {
@@ -9,21 +9,30 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
   
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isLoading) return;
+    if (isLoading || isSuccess) return;
+
     setIsLoading(true);
     try {
       await login(email, password);
-      toast.success("Logged in successfully!");
-      navigate("/", { replace: true });
+      
+      // Visual feedback before navigation
+      setIsSuccess(true);
+      toast.success("Welcome back!");
+
+      // Small delay to let the user see the success state and let Context sync
+      setTimeout(() => {
+        navigate("/", { replace: true });
+      }, 800);
+      
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Invalid credentials");
-    } finally {
+      toast.error(err.response?.data?.message || "Invalid credentials. Please try again.");
       setIsLoading(false);
     }
   };
@@ -32,7 +41,6 @@ export default function Login() {
     <div className="flex min-h-screen bg-white">
       {/* ================= LEFT SIDE: VISUAL PANEL ================= */}
       <div className="relative hidden w-[40%] lg:block bg-[#1a332e]">
-        {/* Background Image with Overlay */}
         <img
           src="https://images.unsplash.com/photo-1554995207-c18c203602cb?auto=format&fit=crop&q=80"
           className="absolute inset-0 h-full w-full object-cover opacity-40"
@@ -41,9 +49,9 @@ export default function Login() {
         <div className="absolute inset-0 bg-gradient-to-br from-[#0fb478]/80 to-[#1a332e]/95" />
         
         <div className="absolute inset-0 flex flex-col justify-between p-16 text-white">
-          <div className="flex items-center gap-2 text-2xl font-black tracking-tighter">
+          <Link to="/" className="flex items-center gap-2 text-2xl font-black tracking-tighter">
             RentKaroo
-          </div>
+          </Link>
 
           <div className="space-y-8">
             <h1 className="text-5xl font-black leading-[1.1]">
@@ -56,11 +64,11 @@ export default function Login() {
             <div className="space-y-4 pt-4">
               <div className="flex items-center gap-3">
                 <div className="bg-white/10 p-2 rounded-lg"><ShieldCheck size={20} /></div>
-                <span className="text-sm font-bold">Secure Authentication</span>
+                <span className="text-sm font-bold text-emerald-50">Secure Authentication</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="bg-white/10 p-2 rounded-lg"><Zap size={20} /></div>
-                <span className="text-sm font-bold">Fast Dashboard Access</span>
+                <span className="text-sm font-bold text-emerald-50">Fast Dashboard Access</span>
               </div>
             </div>
           </div>
@@ -91,9 +99,9 @@ export default function Login() {
                   <input
                     type="email"
                     value={email}
-                    disabled={isLoading}
+                    disabled={isLoading || isSuccess}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full rounded-2xl bg-[#f8faf9] py-5 pl-14 pr-4 font-bold text-[#1a332e] outline-none transition-all border-2 border-transparent focus:border-[#0fb478] focus:bg-white"
+                    className="w-full rounded-2xl bg-[#f8faf9] py-5 pl-14 pr-4 font-bold text-[#1a332e] outline-none transition-all border-2 border-transparent focus:border-[#0fb478] focus:bg-white disabled:opacity-60"
                     placeholder="john@example.com"
                     required
                   />
@@ -112,9 +120,9 @@ export default function Login() {
                   <input
                     type={showPassword ? "text" : "password"}
                     value={password}
-                    disabled={isLoading}
+                    disabled={isLoading || isSuccess}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full rounded-2xl bg-[#f8faf9] py-5 pl-14 pr-14 font-bold text-[#1a332e] outline-none transition-all border-2 border-transparent focus:border-[#0fb478] focus:bg-white"
+                    className="w-full rounded-2xl bg-[#f8faf9] py-5 pl-14 pr-14 font-bold text-[#1a332e] outline-none transition-all border-2 border-transparent focus:border-[#0fb478] focus:bg-white disabled:opacity-60"
                     placeholder="••••••••"
                     required
                   />
@@ -132,11 +140,17 @@ export default function Login() {
             <div className="space-y-6">
               <button
                 type="submit"
-                disabled={isLoading}
-                className="group flex w-full items-center justify-center gap-3 rounded-2xl bg-[#1a332e] py-5 text-lg font-black text-white transition-all hover:bg-black active:scale-[0.98] disabled:opacity-70"
+                disabled={isLoading || isSuccess}
+                className={`group flex w-full items-center justify-center gap-3 rounded-2xl py-5 text-lg font-black text-white transition-all active:scale-[0.98] disabled:opacity-80 shadow-xl shadow-emerald-900/10 ${
+                  isSuccess ? "bg-emerald-500" : "bg-[#1a332e] hover:bg-black"
+                }`}
               >
                 {isLoading ? (
                   <Loader2 className="h-6 w-6 animate-spin" />
+                ) : isSuccess ? (
+                  <>
+                    Verified <CheckCircle2 className="h-6 w-6" />
+                  </>
                 ) : (
                   <>
                     Log In <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
@@ -145,13 +159,13 @@ export default function Login() {
               </button>
 
               <div className="flex flex-col items-center gap-4 pt-4 border-t border-gray-100">
-                <Link to="/forgot-password" size="sm" className="text-sm font-bold text-[#4a635d] hover:text-[#0fb478]">
+                <Link to="/forgot-password" size="sm" className="text-sm font-bold text-[#4a635d] hover:text-[#0fb478] transition-colors">
                   Forgot your password?
                 </Link>
                 <p className="text-sm font-bold text-[#4a635d]">
-                  Already a member?{" "}
-                  <Link to="/register" className="text-[#0fb478] hover:underline underline-offset-4">
-                    Register
+                  Not a member yet?{" "}
+                  <Link to="/register" className="text-[#0fb478] hover:underline underline-offset-4 font-black">
+                    Join RentKaroo
                   </Link>
                 </p>
               </div>

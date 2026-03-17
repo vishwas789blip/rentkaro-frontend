@@ -12,7 +12,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  phone?: string; // Added phone for profile consistency
+  phone?: string;
   role: "user" | "pg_owner" | "admin"; 
 }
 
@@ -20,7 +20,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   isAuthenticated: boolean;
-  setUser: React.Dispatch<React.SetStateAction<User | null>>; // ADDED THIS
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
   login: (email: string, password: string) => Promise<User>;
   register: (data: any) => Promise<void>;
   logout: () => void;
@@ -35,15 +35,27 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  // FIX 1: Initialize state from localStorage IMMEDIATELY
+  const [user, setUser] = useState<User | null>(() => {
+    const savedUser = localStorage.getItem("user");
+    if (savedUser) {
+      try {
+        return JSON.parse(savedUser);
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  });
+
   const [loading, setLoading] = useState(true);
 
   const loadUser = useCallback(async () => {
     try {
-      // Check both keys to match your api.ts interceptor
-      const token = localStorage.getItem("accessToken") || localStorage.getItem("token");
+      const token = localStorage.getItem("accessToken");
       
       if (!token) {
+        setUser(null);
         setLoading(false);
         return;
       }
@@ -53,16 +65,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (userData) {
         setUser(userData);
-        // Sync localStorage with fresh data from server
         localStorage.setItem("user", JSON.stringify(userData));
-      } else {
-        throw new Error("No user data found");
       }
-    } catch (err) {
-      console.error("Auth initialization failed:", err);
-      // Don't clear everything on a single failed network request, 
-      // only if it's a 401 Unauthorized
-      setUser(null);
+    } catch (err: any) {
+      console.error("Auth sync failed:", err);
+      // Only clear user if the token is actually invalid (401)
+      if (err.response?.status === 401) {
+        logout();
+      }
     } finally {
       setLoading(false);
     }
@@ -76,22 +86,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     try {
       const res = await authAPI.login({ email, password });
-      
       const userData = res.data?.data?.user || res.data?.user;
       const accessToken = res.data?.data?.accessToken || res.data?.accessToken;
-      const refreshToken = res.data?.data?.refreshToken || res.data?.refreshToken;
 
-      if (!userData || !accessToken) throw new Error("Invalid server response");
-
-      localStorage.setItem("accessToken", accessToken);
-      if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
-      localStorage.setItem("user", JSON.stringify(userData));
-
-      setUser(userData);
-      return userData; 
-    } catch (error) {
-      setUser(null);
-      throw error; 
+      if (userData && accessToken) {
+        localStorage.setItem("accessToken", accessToken);
+        localStorage.setItem("user", JSON.stringify(userData));
+        setUser(userData);
+        return userData;
+      }
+      throw new Error("Invalid login response");
     } finally {
       setLoading(false);
     }
@@ -102,23 +106,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const res = await authAPI.register(data);
       const responseData = res.data?.data || res.data;
-      const { user: userData, accessToken, refreshToken } = responseData;
+      const { user: userData, accessToken } = responseData;
 
       if (accessToken) {
         localStorage.setItem("accessToken", accessToken);
-        if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
         localStorage.setItem("user", JSON.stringify(userData));
         setUser(userData);
       }
-    } catch (error) {
-      throw error;
     } finally {
       setLoading(false);
     }
   }, []);
 
   const logout = useCallback(() => {
-    localStorage.clear();
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("user");
     setUser(null);
     window.location.href = "/login";
   }, []);
@@ -129,7 +132,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         user, 
         loading, 
         isAuthenticated: !!user, 
-        setUser, // EXPOSED HERE
+        setUser, 
         login, 
         register, 
         logout 

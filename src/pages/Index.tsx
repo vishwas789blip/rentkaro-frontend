@@ -77,23 +77,7 @@ const Index = () => {
             </p>
 
             {/* Mock Search Bar UI */}
-            <div className="flex flex-col sm:flex-row gap-3 p-2 bg-white rounded-3xl shadow-2xl shadow-emerald-900/5 border border-[#e0f2ec] max-w-xl">
-              <div className="flex-1 flex items-center gap-3 px-4 py-3">
-                <MapPin className="text-[#0fb478]" size={20} />
-                <input 
-                  type="text" 
-                  placeholder="Enter your college or city..." 
-                  className="bg-transparent outline-none font-bold text-[#1a332e] w-full"
-                />
-              </div>
-              <Button
-                size="lg"
-                className="bg-[#1a332e] hover:bg-black rounded-2xl px-8 font-black transition-all"
-                onClick={() => navigate("/listings")}
-              >
-                Search Now
-              </Button>
-            </div>
+            
           </div>
 
           {/* Hero Image / Illustration Area */}

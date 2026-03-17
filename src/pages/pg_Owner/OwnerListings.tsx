@@ -7,11 +7,12 @@ import { Edit, Trash2, MapPin, Home, Plus, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge"; // Assuming Shadcn or similar
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const OwnerListings = () => {
   const [listings, setListings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   const fetchListings = async () => {
     try {
@@ -70,8 +71,13 @@ const OwnerListings = () => {
             </div>
             <h3 className="text-xl font-semibold">No listings found</h3>
             <p className="text-gray-500 mb-6">Start earning by listing your first PG property today.</p>
-            <Button variant="outline">Create your first listing</Button>
-          </div>
+<Button 
+  variant="outline"
+  onClick={() => navigate("/dashboard/owner/create-listing")}
+>
+  <Plus className="h-4 w-4 mr-2" />
+  Create your first listing
+</Button>          </div>
         ) : (
           /* Grid View */
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -101,9 +107,14 @@ const OwnerListings = () => {
                 </CardContent>
 
                 <CardFooter className="p-5 pt-0 flex gap-3">
-                  <Button variant="outline" size="sm" className="w-full">
-                    <Edit className="h-4 w-4 mr-2" /> Edit
-                  </Button>
+                  <Button 
+  variant="outline" 
+  size="sm" 
+  className="w-full"
+  onClick={() => navigate(`/dashboard/owner/edit-listing/${listing._id}`)}
+>
+  <Edit className="h-4 w-4 mr-2" /> Edit
+</Button>
                   <Button 
                     variant="destructive" 
                     size="sm" 

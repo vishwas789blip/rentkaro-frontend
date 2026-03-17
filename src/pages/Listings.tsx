@@ -6,7 +6,10 @@ import { listingAPI } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Search, SlidersHorizontal, X, MapPin, Wallet, RotateCcw } from "lucide-react";
+import { 
+  Search, SlidersHorizontal, X, MapPin, Wallet, 
+  RotateCcw, Wifi, Wind, Car, Waves, Dumbbell, ShieldCheck, UtensilsCrossed 
+} from "lucide-react";
 
 const locations = ["All", "Ghaziabad", "Delhi", "Noida"];
 const priceRanges = [
@@ -16,10 +19,21 @@ const priceRanges = [
   "Above ₹10,000",
 ];
 
+const amenityList = [
+  { id: "wifi", label: "WiFi", icon: <Wifi size={14} /> },
+  { id: "ac", label: "AC", icon: <Wind size={14} /> },
+  { id: "parking", label: "Parking", icon: <Car size={14} /> },
+  { id: "laundry", label: "Laundry", icon: <Waves size={14} /> },
+  { id: "gym", label: "Gym", icon: <Dumbbell size={14} /> },
+  { id: "security", label: "Security", icon: <ShieldCheck size={14} /> },
+  { id: "kitchen", label: "Kitchen", icon: <UtensilsCrossed size={14} /> },
+];
+
 const Listings = () => {
   const [search, setSearch] = useState("");
   const [locFilter, setLocFilter] = useState("All");
   const [priceFilter, setPriceFilter] = useState("All");
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [listings, setListings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,10 +54,24 @@ const Listings = () => {
     fetchListings();
   }, []);
 
+  const toggleAmenity = (id: string) => {
+    setSelectedAmenities(prev => 
+      prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id]
+    );
+  };
+
+  const handleReset = () => {
+    setSearch("");
+    setLocFilter("All");
+    setPriceFilter("All");
+    setSelectedAmenities([]);
+  };
+
   const filtered = listings.filter((l) => {
     const city = l.address?.city?.toLowerCase() || "";
     const title = l.title?.toLowerCase() || "";
     const price = l.pricePerMonth || 0;
+    const listingAmenities = l.amenities || [];
 
     const matchesSearch = !search || title.includes(search.toLowerCase()) || city.includes(search.toLowerCase());
     const matchesLoc = locFilter === "All" || city === locFilter.toLowerCase();
@@ -53,7 +81,10 @@ const Listings = () => {
     else if (priceFilter === "₹7,000 - ₹10,000") matchesPrice = price >= 7000 && price <= 10000;
     else if (priceFilter === "Above ₹10,000") matchesPrice = price > 10000;
 
-    return matchesSearch && matchesLoc && matchesPrice;
+    const matchesAmenities = selectedAmenities.length === 0 || 
+      selectedAmenities.every(amenity => listingAmenities.includes(amenity));
+
+    return matchesSearch && matchesLoc && matchesPrice && matchesAmenities;
   });
 
   const FilterPanel = () => (
@@ -81,7 +112,7 @@ const Listings = () => {
         </div>
       </div>
 
-      {/* Price Section */}
+      {/* Budget Section */}
       <div>
         <div className="flex items-center gap-2 mb-4 text-[#1a332e]">
           <Wallet size={16} className="text-[#0fb478]" />
@@ -104,10 +135,34 @@ const Listings = () => {
         </div>
       </div>
 
+      {/* Amenities Section */}
+      <div>
+        <div className="flex items-center gap-2 mb-4 text-[#1a332e]">
+          <ShieldCheck size={16} className="text-[#0fb478]" />
+          <Label className="text-sm font-black uppercase tracking-wider">Amenities</Label>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {amenityList.map((amenity) => (
+            <button
+              key={amenity.id}
+              onClick={() => toggleAmenity(amenity.id)}
+              className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all border ${
+                selectedAmenities.includes(amenity.id)
+                  ? "bg-[#0fb478] text-white border-[#0fb478]"
+                  : "bg-white text-[#4a635d] border-[#e0f2ec] hover:border-[#0fb478]"
+              }`}
+            >
+              {amenity.icon}
+              {amenity.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <Button
         variant="ghost"
-        className="w-full justify-start text-red-500 font-bold hover:bg-red-50 hover:text-red-600 rounded-xl"
-        onClick={() => { setLocFilter("All"); setPriceFilter("All"); }}
+        className="w-full justify-start text-red-500 font-bold hover:bg-red-50 hover:text-red-600 rounded-xl mt-4"
+        onClick={handleReset}
       >
         <RotateCcw className="mr-2 h-4 w-4" /> Reset Filters
       </Button>
@@ -175,7 +230,7 @@ const Listings = () => {
                   <p className="text-[#4a635d] mt-2 font-medium">Try broadening your search or resetting filters.</p>
                   <Button
                     className="mt-8 bg-[#0fb478] hover:bg-[#0d9a66] rounded-xl px-8 font-black"
-                    onClick={() => { setSearch(""); setLocFilter("All"); setPriceFilter("All"); }}
+                    onClick={handleReset}
                   >
                     Reset Everything
                   </Button>

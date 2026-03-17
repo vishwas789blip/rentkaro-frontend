@@ -1,9 +1,5 @@
 import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
 
-/* =====================================================
-   Types for API payloads & responses
-===================================================== */
-
 interface RegisterData {
   name: string;
   email: string;
@@ -23,14 +19,6 @@ interface UserProfile {
   email: string;
   phone?: string;
   role: "user" | "pg_owner" | "admin";
-}
-
-interface Listing {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  images: string[];
 }
 
 interface Booking {
@@ -76,6 +64,15 @@ interface Listing {
 
   amenities: string[];
 }
+
+interface ListingFilters {
+  search?: string;
+  city?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  amenities?: string[];
+}
+
 /* =====================================================
    Axios Instance
 ===================================================== */
@@ -201,7 +198,8 @@ export const authAPI = {
 ===================================================== */
 
 export const listingAPI = {
-  getAll: (params?: any) =>
+
+  getAll: (params?: ListingFilters) =>
     apiClient.get<{ data: Listing[] }>("/pg-listings", { params }),
 
   getById: (id: string) =>
@@ -213,10 +211,10 @@ export const listingAPI = {
     }),
 
   getOwnerListings: () =>
-  apiClient.get<{ success: boolean; data: Listing[] }>(
-    "/pg-listings/owner/my-listings"
-  ),
-  
+    apiClient.get<{ success: boolean; data: Listing[] }>(
+      "/pg-listings/owner/my-listings"
+    ),
+
   /* ================= UPDATE LISTING ================= */
 
   update: (id: string, data: FormData) =>

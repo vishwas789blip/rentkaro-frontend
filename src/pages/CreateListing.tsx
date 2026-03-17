@@ -5,24 +5,35 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, X, Upload, MapPin, Building, Info } from "lucide-react";
+import { 
+  Loader2, X, Upload, MapPin, Building, Info, Plus,
+  Wifi, Wind, Car, WashingMachine, UtensilsCrossed, 
+  Flower2, Dumbbell, ShieldCheck, Zap, Sparkles 
+} from "lucide-react";
 import { listingAPI } from "@/services/api";
 import { toast } from "sonner";
 
-const amenitiesList = [
-  { label: "WiFi", value: "wifi" },
-  { label: "AC", value: "ac" },
-  { label: "Parking", value: "parking" },
-  { label: "Laundry", value: "laundry" },
-  { label: "Kitchen", value: "kitchen" },
-  { label: "Garden", value: "garden" },
-  { label: "Gym", value: "gym" },
-  { label: "Security", value: "security" },
-  { label: "Electricity Bill", value: "electricity bill" }
+// Initial list with icons assigned to your specific choices
+const INITIAL_AMENITIES = [
+  { label: "WiFi", value: "wifi", icon: <Wifi size={14} /> },
+  { label: "AC", value: "ac", icon: <Wind size={14} /> },
+  { label: "Parking", value: "parking", icon: <Car size={14} /> },
+  { label: "Laundry", value: "laundry", icon: <WashingMachine size={14} /> },
+  { label: "Kitchen", value: "kitchen", icon: <UtensilsCrossed size={14} /> },
+  { label: "Garden", value: "garden", icon: <Flower2 size={14} /> },
+  { label: "Gym", value: "gym", icon: <Dumbbell size={14} /> },
+  { label: "Security", value: "security", icon: <ShieldCheck size={14} /> },
+  { label: "Electricity Bill", value: "electricity bill", icon: <Zap size={14} /> }
 ];
 
 const CreateListing = () => {
   const navigate = useNavigate();
+
+  // --- STATES ---
+  const [loading, setLoading] = useState(false);
+  const [newAmenity, setNewAmenity] = useState("");
+  const [allAmenities, setAllAmenities] = useState(INITIAL_AMENITIES);
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
 
   const [form, setForm] = useState<any>({
     title: "",
@@ -37,14 +48,12 @@ const CreateListing = () => {
     images: [],
   });
 
-  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  const handleChange = (e: any) => {
+  // --- HANDLERS ---
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleImageChange = (e: any) => {
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files as FileList);
     if (form.images.length + files.length > 5) {
       toast.error("Maximum 5 images allowed");
@@ -59,35 +68,61 @@ const CreateListing = () => {
     setForm({ ...form, images: newImages });
   };
 
-  const toggleAmenity = (amenity: string) => {
+  const toggleAmenity = (amenityValue: string) => {
     setSelectedAmenities((prev) =>
-      prev.includes(amenity)
-        ? prev.filter((a) => a !== amenity)
-        : [...prev, amenity]
+      prev.includes(amenityValue)
+        ? prev.filter((a) => a !== amenityValue)
+        : [...prev, amenityValue]
     );
   };
 
-  const handleSubmit = async (e: any) => {
+  const handleAddCustomAmenity = () => {
+  if (!newAmenity.trim()) return;
+
+  // REMOVE .replace(/\s+/g, "-") to keep spaces like your other amenities
+  const value = newAmenity.toLowerCase().trim();
+  
+  if (allAmenities.find((a) => a.value === value)) {
+    toast.error("This amenity is already in the list");
+    return;
+  }
+
+  const newItem = { 
+    label: newAmenity.trim(), 
+    value, 
+    icon: <Sparkles size={14} className="text-emerald-500" /> 
+  };
+
+  setAllAmenities([...allAmenities, newItem]);
+  setSelectedAmenities([...selectedAmenities, value]); 
+  setNewAmenity(""); 
+};
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (form.images.length === 0) return toast.error("Please upload at least one image");
+
     try {
       setLoading(true);
       const formData = new FormData();
 
-      // Append all fields
-      Object.keys(form).forEach(key => {
-        if (key === 'images') {
-          form.images.forEach((file: File) => formData.append("images", file));
-        } else {
-          formData.append(key, form[key]);
-        }
-      });
+      formData.append("title", form.title);
+      formData.append("description", form.description);
+      formData.append("pricePerMonth", form.pricePerMonth);
+      formData.append("availableRooms", form.availableRooms);
+      formData.append("roomType", form.roomType);
+      
+      formData.append("street", form.street);
+      formData.append("city", form.city);
+      formData.append("state", form.state);
+      formData.append("pincode", form.pincode);
 
-      // Standard way to send arrays in FormData for Multer
+      form.images.forEach((file: File) => formData.append("images", file));
       selectedAmenities.forEach((a) => formData.append("amenities", a));
 
       await listingAPI.create(formData);
       toast.success("Listing published successfully!");
-      navigate("/dashboard/owner");
+      navigate("/dashboard/owner/listings");
     } catch (err: any) {
       toast.error(err.response?.data?.message || "Failed to create listing");
     } finally {
@@ -105,7 +140,7 @@ const CreateListing = () => {
 
         <form onSubmit={handleSubmit} className="space-y-10">
           
-          {/* Section: Basic Details */}
+          {/* Section: Property Details */}
           <div className="bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm space-y-6">
             <div className="flex items-center gap-3 mb-2">
               <Building className="text-emerald-600" size={20} />
@@ -120,12 +155,12 @@ const CreateListing = () => {
 
               <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Description</Label>
-                <Textarea name="description" value={form.description} onChange={handleChange} required rows={4} className="rounded-2xl bg-gray-50 border-none font-bold focus:ring-2 focus:ring-emerald-500" placeholder="Tell us about the atmosphere, rules, and nearby landmarks..." />
+                <Textarea name="description" value={form.description} onChange={handleChange} required rows={4} className="rounded-2xl bg-gray-50 border-none font-bold focus:ring-2 focus:ring-emerald-500" placeholder="Tell us about the atmosphere, rules, nearby landmarks..." />
               </div>
             </div>
           </div>
 
-          {/* Section: Media */}
+          {/* Section: Photos */}
           <div className="bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm space-y-6">
             <div className="flex justify-between items-center">
                <h2 className="text-xl font-bold text-gray-900">Photos</h2>
@@ -152,7 +187,7 @@ const CreateListing = () => {
             </div>
           </div>
 
-          {/* Section: Address */}
+          {/* Section: Location */}
           <div className="bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm space-y-6">
             <div className="flex items-center gap-3">
               <MapPin className="text-emerald-600" size={20} />
@@ -166,7 +201,7 @@ const CreateListing = () => {
             </div>
           </div>
 
-          {/* Section: Pricing & Amenities */}
+          {/* Section: Pricing & Capacity */}
           <div className="grid md:grid-cols-2 gap-8">
             <div className="bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm space-y-6">
               <h2 className="text-xl font-bold text-gray-900">Pricing & Capacity</h2>
@@ -181,34 +216,71 @@ const CreateListing = () => {
               </div>
             </div>
 
-            <div className="bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm space-y-6">
-              <h2 className="text-xl font-bold text-gray-900">Amenities</h2>
-              <div className="flex flex-wrap gap-2">
-{amenitiesList.map((a) => (
-  <button
-    key={a.value}
-    type="button"
-    onClick={() => toggleAmenity(a.value)}
-    className={`px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-tight transition-all ${
-      selectedAmenities.includes(a.value)
-        ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/20"
-        : "bg-gray-50 text-gray-400 hover:bg-gray-100"
-    }`}
-  >
-    {a.label}
-  </button>
-))}
+            {/* UPDATED AMENITIES SECTION */}
+            <div className="bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm space-y-6 flex flex-col">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900">Amenities</h2>
+                <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest bg-emerald-50 px-2 py-1 rounded-md">
+                   {selectedAmenities.length} Selected
+                </span>
+              </div>
+              
+              {/* Add Custom Amenity Input */}
+              <div className="flex gap-2 p-1 bg-gray-50 rounded-2xl border border-gray-100">
+                <Input 
+                  placeholder="Other (Fridge, RO...)" 
+                  value={newAmenity} 
+                  onChange={(e) => setNewAmenity(e.target.value)}
+                  className="bg-transparent border-none shadow-none focus-visible:ring-0 text-xs font-bold"
+                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddCustomAmenity())}
+                />
+                <Button 
+                  type="button" 
+                  onClick={handleAddCustomAmenity}
+                  className="bg-white text-emerald-600 hover:bg-emerald-50 h-10 w-10 p-0 rounded-xl shadow-sm transition-all"
+                >
+                  <Plus size={18} />
+                </Button>
+              </div>
+
+              {/* Amenities Grid with Icons */}
+              <div className="grid grid-cols-2 gap-2 overflow-y-auto max-h-[220px] pr-2 custom-scrollbar">
+                {allAmenities.map((a) => {
+                  const isSelected = selectedAmenities.includes(a.value);
+                  return (
+                    <button
+                      key={a.value}
+                      type="button"
+                      onClick={() => toggleAmenity(a.value)}
+                      className={`flex items-center gap-2 px-3 py-3 rounded-2xl text-[10px] font-black uppercase tracking-tight transition-all border ${
+                        isSelected
+                          ? "bg-emerald-600 text-white border-emerald-600 shadow-lg shadow-emerald-100"
+                          : "bg-white text-gray-500 border-gray-100 hover:border-emerald-200"
+                      }`}
+                    >
+                      <span className={isSelected ? "text-white" : "text-emerald-500"}>
+                        {a.icon}
+                      </span>
+                      {a.label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
 
+          {/* Footer Actions */}
           <div className="flex items-center justify-between pt-6 border-t border-gray-50">
             <div className="flex items-center gap-2 text-gray-400 italic">
               <Info size={14} />
               <span className="text-[10px] font-bold uppercase tracking-tight">Public listings are verified by admins.</span>
             </div>
-            <Button disabled={loading} className="bg-gray-900 hover:bg-black text-white px-10 h-14 rounded-2xl font-black text-lg transition-all shadow-xl shadow-gray-900/10">
-              {loading ? <Loader2 className="animate-spin" /> : "Publish Listing"}
+            <Button 
+              type="submit"
+              disabled={loading} 
+              className="bg-gray-900 hover:bg-black text-white px-10 h-14 rounded-2xl font-black text-lg transition-all shadow-xl shadow-gray-900/10"
+            >
+              {loading ? <Loader2 className="mr-2 animate-spin" /> : "Publish Listing"}
             </Button>
           </div>
 
