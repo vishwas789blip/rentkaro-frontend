@@ -46,13 +46,20 @@ const Navbar = () => {
             Browse PGs
           </Link>
           
-          {/* This check ensures that if we are still 'loading' the auth state, 
-              we don't show the wrong buttons (like Login/Signup) for a split second.
-          */}
-          {!loading && (
-            <>
-              {isAuthenticated && user ? (
-                <div className="flex items-center gap-6 pl-4 border-l border-[#e0f2ec]">
+          <div className="flex items-center gap-6 pl-4 border-l border-[#e0f2ec]">
+            {/* --- LOADING STATE (SKELETON) --- */}
+            {loading ? (
+              <div className="flex items-center gap-3 animate-pulse">
+                <div className="h-9 w-9 rounded-full bg-slate-100" />
+                <div className="flex flex-col gap-1">
+                  <div className="h-3 w-20 bg-slate-100 rounded" />
+                  <div className="h-2 w-12 bg-slate-50 rounded" />
+                </div>
+              </div>
+            ) : isAuthenticated && user ? (
+              /* --- AUTHENTICATED STATE --- */
+              <>
+                <div className="flex items-center gap-6">
                   {/* User Identity */}
                   <div className="flex items-center gap-3">
                     <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#f0f9f6] border border-[#d1e9df] text-sm font-black text-[#0fb478] shadow-sm">
@@ -60,7 +67,7 @@ const Navbar = () => {
                     </div>
                     <div className="hidden flex-col leading-tight lg:flex">
                       <span className="text-sm font-bold text-[#1a332e]">
-                        {user.name || "User"}
+                        {user.name} 
                       </span>
                       <span className="text-[10px] font-black uppercase tracking-wider text-[#0fb478]">
                         {user.role?.replace("_", " ")}
@@ -89,27 +96,28 @@ const Navbar = () => {
                     </Button>
                   </div>
                 </div>
-              ) : (
-                <div className="flex items-center gap-3">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="font-bold text-[#4a635d]"
-                    onClick={() => navigate("/login")}
-                  >
-                    Log in
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="bg-[#0fb478] hover:bg-[#0d9a66] font-bold shadow-lg shadow-[#0fb478]/20 rounded-xl"
-                    onClick={() => navigate("/register")}
-                  >
-                    Sign up
-                  </Button>
-                </div>
-              )}
-            </>
-          )}
+              </>
+            ) : (
+              /* --- GUEST STATE --- */
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="font-bold text-[#4a635d]"
+                  onClick={() => navigate("/login")}
+                >
+                  Log in
+                </Button>
+                <Button
+                  size="sm"
+                  className="bg-[#0fb478] hover:bg-[#0d9a66] font-bold shadow-lg shadow-[#0fb478]/20 rounded-xl"
+                  onClick={() => navigate("/register")}
+                >
+                  Sign up
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Mobile Toggle */}
@@ -124,7 +132,9 @@ const Navbar = () => {
           <div className="flex flex-col gap-6 font-bold text-[#4a635d]">
             <Link to="/listings" onClick={() => setOpen(false)}>Browse PGs</Link>
 
-            {isAuthenticated && user ? (
+            {loading ? (
+               <div className="h-10 w-full bg-slate-100 animate-pulse rounded-xl" />
+            ) : isAuthenticated && user ? (
               <>
                 <div className="flex items-center gap-3 py-2">
                   <div className="h-10 w-10 rounded-full bg-[#f0f9f6] flex items-center justify-center text-[#0fb478] font-black">

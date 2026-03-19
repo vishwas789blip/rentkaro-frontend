@@ -35,7 +35,6 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  // FIX 1: Initialize state from localStorage IMMEDIATELY
   const [user, setUser] = useState<User | null>(() => {
     const savedUser = localStorage.getItem("user");
     if (savedUser) {
@@ -49,38 +48,53 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   });
 
   const [loading, setLoading] = useState(true);
+// 1️⃣ logout first
+const logout = useCallback(() => {
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("refreshToken");
+  localStorage.removeItem("user");
+  setUser(null);
+  window.location.href = "/login";
+}, []);
 
-  const loadUser = useCallback(async () => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      
-      if (!token) {
-        setUser(null);
-        setLoading(false);
-        return;
-      }
-
-      const res = await authAPI.getMe();
-      const userData = res.data?.data?.user || res.data?.data || res.data?.user;
-
-      if (userData) {
-        setUser(userData);
-        localStorage.setItem("user", JSON.stringify(userData));
-      }
-    } catch (err: any) {
-      console.error("Auth sync failed:", err);
-      // Only clear user if the token is actually invalid (401)
-      if (err.response?.status === 401) {
-        logout();
-      }
-    } finally {
+// 2️⃣ then loadUser
+// AuthContext.tsx ke loadUser ko isse replace karein
+const loadUser = useCallback(async () => {
+  try {
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      setUser(null);
       setLoading(false);
+      return;
     }
-  }, []);
 
-  useEffect(() => {
-    loadUser();
-  }, [loadUser]);
+    const res = await authAPI.getMe();
+    
+    // Yahan check karein: Agar backend 'fullName' bhej raha hai toh use 'name' mein map karein
+    const apiData = res.data?.data?.user || res.data?.user || res.data?.data;
+    
+    const userData: User = {
+      id: apiData._id || apiData.id,
+      name: apiData.name || apiData.fullName || "User", // Fallback chain
+      email: apiData.email,
+      role: apiData.role,
+      phone: apiData.phone
+    };
+
+    if (userData.id) {
+      setUser(userData);
+      localStorage.setItem("user", JSON.stringify(userData));
+    }
+  } catch (err: any) {
+    if (err.response?.status === 401) logout();
+  } finally {
+    setLoading(false);
+  }
+}, [logout]);
+// 3️⃣ then useEffect
+useEffect(() => {
+  loadUser();
+}, [loadUser]);
 
   const login = async (email: string, password: string) => {
     setLoading(true);
@@ -116,14 +130,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
-
-  const logout = useCallback(() => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("user");
-    setUser(null);
-    window.location.href = "/login";
   }, []);
 
   return (

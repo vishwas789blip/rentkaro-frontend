@@ -194,7 +194,7 @@ const App = () => {
                     element={
                     <ProtectedRoute allowedRoles={["pg_owner"]}>
                       <OwnerListings />
-                      </ProtectedRoute>
+                    </ProtectedRoute>
                     }
                 />
 
@@ -214,15 +214,6 @@ const App = () => {
                     element={
                       <ProtectedRoute allowedRoles={["admin"]}>
                         <AllListings />
-                      </ProtectedRoute>
-                    }
-                  />
-
-                  <Route
-                    path="/dashboard/admin/analytics"
-                    element={
-                      <ProtectedRoute allowedRoles={["admin"]}>
-                        <Analytics />
                       </ProtectedRoute>
                     }
                   />

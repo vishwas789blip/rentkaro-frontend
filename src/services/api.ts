@@ -245,14 +245,15 @@ export const bookingAPI = {
   getAllBookings: () =>
     apiClient.get<{ data: Booking[] }>("/bookings/admin/all"),
 
-  approve: (id: string) =>
-    apiClient.post(`/bookings/${id}/approve`),
+  approve: (id: string) => 
+    apiClient.patch(`/bookings/${id}/approve`), // Fixed: changed post to patch
 
-  reject: (id: string, rejectionReason: string) =>
-    apiClient.post(`/bookings/${id}/reject`, { rejectionReason }),
+  reject: (id: string, rejectionReason: string) => 
+    apiClient.patch(`/bookings/${id}/reject`, { rejectionReason }), // Fixed: patch
 
-  cancel: (id: string) =>
-    apiClient.post(`/bookings/${id}/cancel`),
+  cancel: (id: string) => 
+    apiClient.patch(`/bookings/${id}/cancel`), // Fixed: patch
+    
 };
 
 /* =====================================================
@@ -288,13 +289,21 @@ export const userAPI = {
 
 export const reviewAPI = {
   getByListing: (listingId: string) =>
-    apiClient.get<{ data: Review[] }>(`/reviews/listing/${listingId}`),
+    apiClient.get<{ success: boolean; data: Review[] }>(`/reviews/listing/${listingId}`),
 
   create: (data: {
     listingId: string;
     rating: number;
     comment: string;
   }) => apiClient.post("/reviews", data),
+
+  // NEW: Update an existing review
+  update: (reviewId: string, data: { rating: number; comment: string }) =>
+    apiClient.patch(`/reviews/${reviewId}`, data),
+
+  // NEW: Toggle helpful status
+  markHelpful: (reviewId: string) =>
+    apiClient.patch(`/reviews/${reviewId}/helpful`),
 
   delete: (reviewId: string) =>
     apiClient.delete(`/reviews/${reviewId}`),
