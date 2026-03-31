@@ -159,9 +159,6 @@ export default function Login() {
               </button>
 
               <div className="flex flex-col items-center gap-4 pt-4 border-t border-gray-100">
-                <Link to="/forgot-password" size="sm" className="text-sm font-bold text-[#4a635d] hover:text-[#0fb478] transition-colors">
-                  Forgot your password?
-                </Link>
                 <p className="text-sm font-bold text-[#4a635d]">
                   Not a member yet?{" "}
                   <Link to="/register" className="text-[#0fb478] hover:underline underline-offset-4 font-black">

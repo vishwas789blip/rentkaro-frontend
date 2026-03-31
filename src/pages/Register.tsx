@@ -33,20 +33,23 @@ export default function Register() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (form.password !== confirmPassword) {
-      toast.error("Passwords do not match");
-      return;
-    }
+  e.preventDefault();
+
+  if (form.password !== confirmPassword) {
+    toast.error("Passwords do not match");
+    return;
+  }
 
   try {
-    const response = await register(form); 
-      toast.success("OTP sent to your email 📧");
-  
-      navigate("/verify-otp", { state: { email: form.email } }); 
-  } catch (error) {
+    await register(form);
+
+    toast.success("Account created successfully 🎉");
+
+    navigate("/login");
+  } catch (error: any) {
     toast.error(error.response?.data?.message || "Registration failed");
-  }};
+  }
+};
 
   return (
     <div className="flex min-h-screen bg-white font-sans">

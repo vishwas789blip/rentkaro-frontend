@@ -52,10 +52,7 @@ const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const CreateListing = lazy(() => import("./pages/CreateListing"));
 const BookingPage = lazy(() => import("./pages/BookingPage"));
 
-const VerifyOTP = lazy(() => import("./pages/VerifyOTP"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
-const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
-
 
 // ... other imports
 const Privacy = lazy(() => import("./pages/Privacy"));
@@ -67,7 +64,6 @@ const Help = lazy(() => import("./pages/Help"));
 // Ensure Admin Support still points to the admin version
 const AdminSupport = lazy(() => import("./pages/admin/Support"));
 
-const Analytics = lazy(() => import("./pages/admin/Analytics"));
 const AllListings = lazy(() => import("./pages/admin/AllListings"));
 
 const UserSettings = lazy(() => import("./pages/users/UserSettings"));
@@ -117,9 +113,7 @@ const App = () => {
 
                   {/* ================= AUTH ROUTES ================= */}
 
-                  <Route path="/verify-otp" element={<VerifyOTP />} />
                   <Route path="/reset-password/:token" element={<ResetPassword />} />
-                  <Route path="/forgot-password" element={<ForgotPassword />} />
 
                   {/* ================= BOOKING ================= */}
 
@@ -181,14 +175,14 @@ const App = () => {
                     }
                   />
 
-<Route
-  path="/dashboard/owner/edit-listing/:id"
-  element={
-    <ProtectedRoute allowedRoles={["pg_owner", "admin"]}>
-      <EditListing />
-    </ProtectedRoute>
-  }
-/>
+                  <Route
+                    path="/dashboard/owner/edit-listing/:id"
+                    element={
+                    <ProtectedRoute allowedRoles={["pg_owner", "admin"]}>
+                      <EditListing />
+                    </ProtectedRoute>
+                    }
+                  />
                   <Route
                     path="/dashboard/owner/listings"
                     element={
@@ -196,7 +190,7 @@ const App = () => {
                       <OwnerListings />
                     </ProtectedRoute>
                     }
-                />
+                  />
 
                   {/* ================= ADMIN DASHBOARD ================= */}
 

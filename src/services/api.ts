@@ -215,14 +215,10 @@ export const listingAPI = {
       "/pg-listings/owner/my-listings"
     ),
 
-  /* ================= UPDATE LISTING ================= */
-
   update: (id: string, data: FormData) =>
     apiClient.put(`/pg-listings/${id}`, data, {
       headers: { "Content-Type": "multipart/form-data" },
     }),
-
-  /* ================= DELETE LISTING ================= */
 
   delete: (id: string) =>
     apiClient.delete(`/pg-listings/${id}`),
@@ -297,11 +293,9 @@ export const reviewAPI = {
     comment: string;
   }) => apiClient.post("/reviews", data),
 
-  // NEW: Update an existing review
   update: (reviewId: string, data: { rating: number; comment: string }) =>
     apiClient.patch(`/reviews/${reviewId}`, data),
 
-  // NEW: Toggle helpful status
   markHelpful: (reviewId: string) =>
     apiClient.patch(`/reviews/${reviewId}/helpful`),
 
