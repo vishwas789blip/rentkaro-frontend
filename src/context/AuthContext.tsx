@@ -8,22 +8,26 @@ import {
 } from "react";
 import { authAPI } from "@/services/api";
 
+/* =====================================================
+   Types
+===================================================== */
+
 export interface User {
-  id: string;
-  name: string;
-  email: string;
+  id:     string;
+  name:   string;
+  email:  string;
   phone?: string;
-  role: "user" | "pg_owner" | "admin"; 
+  role:   "user" | "pg_owner" | "admin";
 }
 
 interface AuthContextType {
-  user: User | null;
-  loading: boolean;
+  user:            User | null;
+  loading:         boolean;
   isAuthenticated: boolean;
-  setUser: React.Dispatch<React.SetStateAction<User | null>>;
-  login: (email: string, password: string) => Promise<User>;
-  register: (data: any) => Promise<void>;
-  logout: () => void;
+  setUser:         React.Dispatch<React.SetStateAction<User | null>>;
+  login:           (email: string, password: string) => Promise<User>;
+  register:        (data: any) => Promise<{ email: string }>;
+  logout:          () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -34,114 +38,128 @@ export const useAuth = () => {
   return context;
 };
 
+/* =====================================================
+   Helper — parse user from API response
+===================================================== */
+
+function parseUser(apiData: any): User | null {
+  if (!apiData) return null;
+  const id = apiData._id || apiData.id;
+  if (!id) return null;
+  return {
+    id,
+    name:  apiData.name  || "User",
+    email: apiData.email,
+    role:  apiData.role,
+    phone: apiData.phone,
+  };
+}
+
+/* =====================================================
+   Provider
+===================================================== */
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
+
+  // Hydrate from localStorage on first render (avoids flash)
   const [user, setUser] = useState<User | null>(() => {
-    const savedUser = localStorage.getItem("user");
-    if (savedUser) {
-      try {
-        return JSON.parse(savedUser);
-      } catch (e) {
-        return null;
-      }
+    try {
+      const saved = localStorage.getItem("user");
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
     }
-    return null;
   });
 
-  const [loading, setLoading] = useState(true);
-// 1️⃣ logout first
-const logout = useCallback(() => {
-  localStorage.removeItem("accessToken");
-  localStorage.removeItem("refreshToken");
-  localStorage.removeItem("user");
-  setUser(null);
-  window.location.href = "/login";
-}, []);
+  const [loading, setLoading] = useState(false);
 
-// 2️⃣ then loadUser
-// AuthContext.tsx ke loadUser ko isse replace karein
-const loadUser = useCallback(async () => {
-  try {
+  /* ── logout ── */
+  const logout = useCallback(() => {
+    authAPI.logout().catch(() => {});
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("user");
+    setUser(null);
+    window.location.href = "/login";
+  }, []);
+
+  /* ── loadUser — silently verify on app start ── */
+  const loadUser = useCallback(async () => {
     const token = localStorage.getItem("accessToken");
+
     if (!token) {
       setUser(null);
-      setLoading(false);
       return;
     }
 
-    const res = await authAPI.getMe();
-    
-    // Yahan check karein: Agar backend 'fullName' bhej raha hai toh use 'name' mein map karein
-    const apiData = res.data?.data?.user || res.data?.user || res.data?.data;
-    
-    const userData: User = {
-      id: apiData._id || apiData.id,
-      name: apiData.name || apiData.fullName || "User", // Fallback chain
-      email: apiData.email,
-      role: apiData.role,
-      phone: apiData.phone
-    };
-
-    if (userData.id) {
-      setUser(userData);
-      localStorage.setItem("user", JSON.stringify(userData));
-    }
-  } catch (err: any) {
-    if (err.response?.status === 401) logout();
-  } finally {
-    setLoading(false);
-  }
-}, [logout]);
-// 3️⃣ then useEffect
-useEffect(() => {
-  loadUser();
-}, [loadUser]);
-
-  const login = async (email: string, password: string) => {
-    setLoading(true);
     try {
-      const res = await authAPI.login({ email, password });
-      const userData = res.data?.data?.user || res.data?.user;
-      const accessToken = res.data?.data?.accessToken || res.data?.accessToken;
+      const res     = await authAPI.getMe();
+      const apiData = res.data?.data?.user || res.data?.user || res.data?.data;
+      const parsed  = parseUser(apiData);
 
-      if (userData && accessToken) {
-        localStorage.setItem("accessToken", accessToken);
-        localStorage.setItem("user", JSON.stringify(userData));
-        setUser(userData);
-        return userData;
+      if (parsed) {
+        setUser(parsed);
+        localStorage.setItem("user", JSON.stringify(parsed));
+      } else {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("user");
+        setUser(null);
       }
-      throw new Error("Invalid login response");
-    } finally {
-      setLoading(false);
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        setUser(null);
+        localStorage.removeItem("user");
+      }
     }
+  }, []);
+
+  useEffect(() => {
+    loadUser();
+  }, [loadUser]);
+
+  /* ── login ── */
+  const login = async (email: string, password: string): Promise<User> => {
+    const res = await authAPI.login({ email, password });
+
+    const data         = res.data?.data;
+    const userData     = data?.user;
+    const accessToken  = data?.accessToken;
+    const refreshToken = data?.refreshToken;
+
+    if (!userData || !accessToken) {
+      throw new Error("Invalid login response from server");
+    }
+
+    const parsed = parseUser(userData);
+    if (!parsed) throw new Error("Could not parse user data");
+
+    localStorage.setItem("accessToken",  accessToken);
+    if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
+    localStorage.setItem("user", JSON.stringify(parsed));
+    setUser(parsed);
+
+    return parsed;
   };
 
-  const register = useCallback(async (data: any) => {
-    setLoading(true);
-    try {
-      const res = await authAPI.register(data);
-      const responseData = res.data?.data || res.data;
-      const { user: userData, accessToken } = responseData;
-
-      if (accessToken) {
-        localStorage.setItem("accessToken", accessToken);
-        localStorage.setItem("user", JSON.stringify(userData));
-        setUser(userData);
-      }
-    } finally {
-      setLoading(false);
-    }
+  /* ── register ── */
+  const register = useCallback(async (data: any): Promise<{ email: string }> => {
+    const res   = await authAPI.register(data);
+    const email = res.data?.email || data.email;
+    // No tokens at this stage — user must verify OTP first
+    return { email };
   }, []);
 
   return (
     <AuthContext.Provider
-      value={{ 
-        user, 
-        loading, 
-        isAuthenticated: !!user, 
-        setUser, 
-        login, 
-        register, 
-        logout 
+      value={{
+        user,
+        loading,
+        isAuthenticated: !!user,
+        setUser,
+        login,
+        register,
+        logout,
       }}
     >
       {children}

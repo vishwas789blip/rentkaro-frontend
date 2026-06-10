@@ -5,14 +5,14 @@ import { ArrowRight, Mail, Eye, EyeOff, Lock, Loader2, ShieldCheck, Zap, CheckCi
 import { toast } from "sonner";
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail]           = useState("");
+  const [password, setPassword]     = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-  
+  const [isLoading, setIsLoading]   = useState(false);
+  const [isSuccess, setIsSuccess]   = useState(false);
+
   const { login } = useAuth();
-  const navigate = useNavigate();
+  const navigate  = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,25 +21,25 @@ export default function Login() {
     setIsLoading(true);
     try {
       await login(email, password);
-      
-      // Visual feedback before navigation
       setIsSuccess(true);
       toast.success("Welcome back!");
-
-      // Small delay to let the user see the success state and let Context sync
-      setTimeout(() => {
-        navigate("/", { replace: true });
-      }, 800);
-      
+      setTimeout(() => navigate("/", { replace: true }), 800);
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Invalid credentials. Please try again.");
+      const message = err.response?.data?.message || "Invalid credentials. Please try again.";
+
+      if (message.toLowerCase().includes("verify your email")) {
+        toast.error("Please verify your email first.");
+        return navigate("/verify-email", { state: { email } });
+      }
+
+      toast.error(message);
       setIsLoading(false);
     }
   };
 
   return (
     <div className="flex min-h-screen bg-white">
-      {/* ================= LEFT SIDE: VISUAL PANEL ================= */}
+      {/* Left panel */}
       <div className="relative hidden w-[40%] lg:block bg-[#1a332e]">
         <img
           src="https://images.unsplash.com/photo-1554995207-c18c203602cb?auto=format&fit=crop&q=80"
@@ -47,20 +47,15 @@ export default function Login() {
           alt="Interior"
         />
         <div className="absolute inset-0 bg-gradient-to-br from-[#0fb478]/80 to-[#1a332e]/95" />
-        
         <div className="absolute inset-0 flex flex-col justify-between p-16 text-white">
           <Link to="/" className="flex items-center gap-2 text-2xl font-black tracking-tighter">
             RentKaroo
           </Link>
-
           <div className="space-y-8">
-            <h1 className="text-5xl font-black leading-[1.1]">
-              Welcome <br /> back.
-            </h1>
+            <h1 className="text-5xl font-black leading-[1.1]">Welcome <br /> back.</h1>
             <p className="text-emerald-50/70 text-lg font-medium max-w-sm">
               Log in to manage your bookings, explore new PGs, and stay connected with the community.
             </p>
-            
             <div className="space-y-4 pt-4">
               <div className="flex items-center gap-3">
                 <div className="bg-white/10 p-2 rounded-lg"><ShieldCheck size={20} /></div>
@@ -72,14 +67,11 @@ export default function Login() {
               </div>
             </div>
           </div>
-
-          <p className="text-xs font-bold tracking-widest opacity-40 uppercase">
-            Est. 2026
-          </p>
+          <p className="text-xs font-bold tracking-widest opacity-40 uppercase">Est. 2026</p>
         </div>
       </div>
 
-      {/* ================= RIGHT SIDE: FORM PANEL ================= */}
+      {/* Right panel */}
       <div className="flex w-full items-center justify-center px-8 lg:w-[60%] lg:px-20">
         <div className="w-full max-w-md space-y-12">
           <div className="space-y-3">
@@ -89,7 +81,7 @@ export default function Login() {
 
           <form onSubmit={handleLogin} className="space-y-8">
             <div className="space-y-5">
-              {/* Email Address */}
+              {/* Email */}
               <div className="space-y-2">
                 <label className="text-[10px] font-black uppercase tracking-widest text-[#0fb478] ml-1">
                   Email Address
@@ -114,6 +106,13 @@ export default function Login() {
                   <label className="text-[10px] font-black uppercase tracking-widest text-[#0fb478]">
                     Password
                   </label>
+                  {/* FIX: Forgot password link add kiya */}
+                  <Link
+                    to="/forgotPassword"
+                    className="text-[10px] font-black uppercase tracking-widest text-[#4a635d] hover:text-[#0fb478] transition-colors"
+                  >
+                    Forgot password?
+                  </Link>
                 </div>
                 <div className="relative">
                   <Lock className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-[#cedcd7]" />
@@ -148,13 +147,9 @@ export default function Login() {
                 {isLoading ? (
                   <Loader2 className="h-6 w-6 animate-spin" />
                 ) : isSuccess ? (
-                  <>
-                    Verified <CheckCircle2 className="h-6 w-6" />
-                  </>
+                  <><span>Verified</span><CheckCircle2 className="h-6 w-6" /></>
                 ) : (
-                  <>
-                    Log In <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-                  </>
+                  <><span>Log In</span><ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" /></>
                 )}
               </button>
 

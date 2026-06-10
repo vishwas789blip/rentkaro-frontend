@@ -42,6 +42,8 @@ L.Icon.Default.mergeOptions({
 const Index = lazy(() => import("./pages/Index"));
 const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
+import VerifyEmail from "./pages/VerifyEmail"; 
+import ForgotPassword  from "./pages/ForgotPassward";
 const Listings = lazy(() => import("./pages/Listings"));
 const ListingDetail = lazy(() => import("./pages/ListingDetail"));
 
@@ -107,6 +109,7 @@ const App = () => {
                   <Route path="/" element={<Index />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
+                  <Route path="/verify-email" element={<VerifyEmail />} />
 
                   <Route path="/listings" element={<Listings />} />
                   <Route path="/listings/:id" element={<ListingDetail />} />
@@ -192,6 +195,10 @@ const App = () => {
                     }
                   />
 
+                  <Route
+                    path="/forgotPassword"
+                    element={<ForgotPassword />}
+                  />
                   {/* ================= ADMIN DASHBOARD ================= */}
 
                   <Route

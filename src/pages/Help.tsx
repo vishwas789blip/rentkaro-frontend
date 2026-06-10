@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import MainLayout from "@/layouts/MainLayout";
 import { 
   ChevronDown, Send, MessageCircle, Clock, 
   History, CheckCircle, HelpCircle, ShieldQuestion, LifeBuoy
 } from "lucide-react";
 import { supportAPI } from "@/services/api";
-import { useAuth } from "@/context/AuthContext"; // Import your auth context
+import { useAuth } from "@/context/AuthContext";
 
 export default function Help() {
   const { user } = useAuth(); // Get user status
@@ -23,15 +23,27 @@ export default function Help() {
     { q: "How to contact the host?", a: "Use the 'Message Host' button on the specific PG listing page." }
   ];
 
+  // --- SAFE TICKETS FETCH LOGIC ---
   const fetchMyTickets = async () => {
     if (!user) return; // Don't fetch if not logged in
     setHistoryLoading(true);
     try {
       const res = await supportAPI.getUserTickets();
-      setTickets(res.data.data || []);
+      
+      // Kuch backends res.data.data mein array dete hain, aur kuch res.data.data.tickets mein.
+      // Hum dono cases ko handle kar rahe hain safe parsing se:
+      const incomingData = res.data?.data;
+      const ticketsArray = Array.isArray(incomingData) 
+        ? incomingData 
+        : (incomingData?.tickets || []);
+
+      setTickets(Array.isArray(ticketsArray) ? ticketsArray : []);
     } catch (err) { 
       console.error("Fetch Error:", err); 
-    } finally { setHistoryLoading(false); }
+      setTickets([]); // Fallback to empty array on error
+    } finally { 
+      setHistoryLoading(false); 
+    }
   };
 
   useEffect(() => { 
@@ -47,7 +59,9 @@ export default function Help() {
       setActiveTab("history");
     } catch (error) { 
       alert("Please login to submit a ticket.");
-    } finally { setLoading(false); }
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   return (
@@ -127,20 +141,21 @@ export default function Help() {
             <div className="max-w-3xl mx-auto space-y-6">
               {historyLoading ? (
                 <div className="text-center py-20 animate-pulse text-[#0fb478] font-bold">Loading your tickets...</div>
-              ) : tickets.length === 0 ? (
+              ) : (!tickets || tickets.length === 0) ? (
                 <div className="text-center py-20 border-2 border-dashed border-[#e0f2ec] rounded-[3rem] bg-[#f9fbfb]">
                   <HelpCircle size={40} className="mx-auto text-gray-300 mb-4" />
                   <p className="text-[#4a635d]">No tickets yet. We're here if you need us!</p>
                 </div>
               ) : (
-                tickets.map((t) => (
+                /* SAFE MAP EXECUTION USING CONTINGENCY CHECK */
+                Array.isArray(tickets) && tickets.map((t) => (
                   <div key={t._id} className="bg-white border border-[#e0f2ec] rounded-[2rem] overflow-hidden shadow-sm">
                     <div className="p-6">
                       <div className="flex justify-between items-start mb-4">
                         <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase ${t.status === 'resolved' ? 'bg-[#e0f2ec] text-[#0fb478]' : 'bg-orange-50 text-orange-600'}`}>
                           {t.status === 'resolved' ? <CheckCircle size={12} /> : <Clock size={12} />} {t.status}
                         </div>
-                        <span className="text-[10px] font-bold text-gray-400">ID: #{t._id.slice(-6)}</span>
+                        <span className="text-[10px] font-bold text-gray-400">ID: #{t._id ? t._id.slice(-6) : "------"}</span>
                       </div>
                       <h3 className="text-xl font-bold text-[#1a332e]">{t.subject}</h3>
                       <p className="text-[#4a635d] mt-2 text-sm">{t.message}</p>
