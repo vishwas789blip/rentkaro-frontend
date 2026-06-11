@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
 import MainLayout from "@/layouts/MainLayout";
-import { listingAPI, bookingAPI } from "@/services/api";
+import { listingAPI, bookingAPI } from "@/api";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Calendar, Users, ArrowLeft, Loader2, Info, CheckCircle2, AlertCircle, IndianRupee } from "lucide-react";

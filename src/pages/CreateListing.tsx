@@ -10,7 +10,7 @@ import {
   Wifi, Wind, Car, WashingMachine, UtensilsCrossed,
   Flower2, Dumbbell, ShieldCheck, Zap, Sparkles
 } from "lucide-react";
-import { listingAPI } from "@/services/api";
+import { listingAPI } from "@/api";
 import { toast } from "sonner";
 
 const INITIAL_AMENITIES = [

@@ -15,17 +15,15 @@ export default function ReviewForm({ onSubmit, submitting }: Props) {
   const [comment, setComment] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); // Prevents page reload
+    e.preventDefault(); 
     if (rating === 0 || comment.length < 5) return;
 
     try {
       await onSubmit({ rating, comment });
-      // Reset form ONLY on success
       setRating(0);
       setComment("");
     } catch (error) {
       console.error("Submission failed:", error);
-      // Optionally handle error UI here
     }
   };
 

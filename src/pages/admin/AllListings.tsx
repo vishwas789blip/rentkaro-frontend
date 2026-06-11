@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/layouts/DashboardLayout";
-import apiClient from "@/services/api";
+import { apiClient } from "@/api";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Trash2, MapPin, CheckCircle2, XCircle, Clock } from "lucide-react";

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { useAuth } from "@/context/AuthContext";
-import { listingAPI, bookingAPI } from "@/services/api";
+import { listingAPI, bookingAPI } from "@/api";
 import { IndianRupee, MapPin, Calendar, Plus, LayoutGrid, CheckCircle2, XCircle, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";

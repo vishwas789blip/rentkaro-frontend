@@ -2,160 +2,299 @@ import {
   createContext,
   useContext,
   useState,
-  useCallback,
   useEffect,
+  useCallback,
   ReactNode,
 } from "react";
-import { authAPI } from "@/services/api";
 
-/* =====================================================
+import { authAPI } from "@/api/auth.api";
+import {
+  UserProfile,
+  RegisterData,
+} from "@/types/auth.types";
+
+/* =========================================
    Types
-===================================================== */
-
-export interface User {
-  id:     string;
-  name:   string;
-  email:  string;
-  phone?: string;
-  role:   "user" | "pg_owner" | "admin";
-}
+========================================= */
 
 interface AuthContextType {
-  user:            User | null;
-  loading:         boolean;
+  user: UserProfile | null;
+  loading: boolean;
   isAuthenticated: boolean;
-  setUser:         React.Dispatch<React.SetStateAction<User | null>>;
-  login:           (email: string, password: string) => Promise<User>;
-  register:        (data: any) => Promise<{ email: string }>;
-  logout:          () => void;
+
+  setUser: React.Dispatch<
+    React.SetStateAction<UserProfile | null>
+  >;
+
+  login: (
+    email: string,
+    password: string
+  ) => Promise<UserProfile>;
+
+  register: (
+    data: RegisterData
+  ) => Promise<{ email: string }>;
+
+  logout: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
+const AuthContext =
+  createContext<AuthContextType | null>(
+    null
+  );
+
+/* =========================================
+   Hook
+========================================= */
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth must be used within AuthProvider");
+  const context =
+    useContext(AuthContext);
+
+  if (!context) {
+    throw new Error(
+      "useAuth must be used inside AuthProvider"
+    );
+  }
+
   return context;
 };
 
-/* =====================================================
-   Helper — parse user from API response
-===================================================== */
+/* =========================================
+   Helper
+========================================= */
 
-function parseUser(apiData: any): User | null {
-  if (!apiData) return null;
-  const id = apiData._id || apiData.id;
-  if (!id) return null;
+const parseUser = (
+  userData: any
+): UserProfile | null => {
+  if (!userData) return null;
+
   return {
-    id,
-    name:  apiData.name  || "User",
-    email: apiData.email,
-    role:  apiData.role,
-    phone: apiData.phone,
+    id:
+      userData._id ||
+      userData.id,
+    name:
+      userData.name ||
+      "User",
+    email:
+      userData.email,
+    phone:
+      userData.phone,
+    role:
+      userData.role,
   };
-}
+};
 
-/* =====================================================
+/* =========================================
    Provider
-===================================================== */
+========================================= */
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+export const AuthProvider = ({
+  children,
+}: {
+  children: ReactNode;
+}) => {
+  const [user, setUser] =
+    useState<UserProfile | null>(
+      () => {
+        try {
+          const stored =
+            localStorage.getItem(
+              "user"
+            );
 
-  // Hydrate from localStorage on first render (avoids flash)
-  const [user, setUser] = useState<User | null>(() => {
-    try {
-      const saved = localStorage.getItem("user");
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
-  });
+          return stored
+            ? JSON.parse(stored)
+            : null;
+        } catch {
+          return null;
+        }
+      }
+    );
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] =
+    useState(true);
 
-  /* ── logout ── */
-  const logout = useCallback(() => {
-    authAPI.logout().catch(() => {});
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("user");
-    setUser(null);
-    window.location.href = "/login";
-  }, []);
+  /* =========================================
+     Load User
+  ========================================= */
 
-  /* ── loadUser — silently verify on app start ── */
-  const loadUser = useCallback(async () => {
-    const token = localStorage.getItem("accessToken");
+  const loadUser =
+    useCallback(async () => {
+      const token =
+        localStorage.getItem(
+          "accessToken"
+        );
 
-    if (!token) {
-      setUser(null);
-      return;
-    }
+      if (!token) {
+        setUser(null);
+        setLoading(false);
+        return;
+      }
 
-    try {
-      const res     = await authAPI.getMe();
-      const apiData = res.data?.data?.user || res.data?.user || res.data?.data;
-      const parsed  = parseUser(apiData);
+      try {
+        const response =
+          await authAPI.getMe();
 
-      if (parsed) {
+        const apiUser =
+          response.data?.data
+            ?.user ||
+          response.data?.user ||
+          response.data?.data;
+
+        const parsed =
+          parseUser(apiUser);
+
+        if (!parsed) {
+          throw new Error(
+            "Invalid user"
+          );
+        }
+
         setUser(parsed);
-        localStorage.setItem("user", JSON.stringify(parsed));
-      } else {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("user");
+
+        localStorage.setItem(
+          "user",
+          JSON.stringify(parsed)
+        );
+      } catch {
         setUser(null);
+
+        localStorage.removeItem(
+          "user"
+        );
+
+        localStorage.removeItem(
+          "accessToken"
+        );
+
+        localStorage.removeItem(
+          "refreshToken"
+        );
+      } finally {
+        setLoading(false);
       }
-    } catch (err: any) {
-      if (err.response?.status === 401) {
-        setUser(null);
-        localStorage.removeItem("user");
-      }
-    }
-  }, []);
+    }, []);
 
   useEffect(() => {
     loadUser();
   }, [loadUser]);
 
-  /* ── login ── */
-  const login = async (email: string, password: string): Promise<User> => {
-    const res = await authAPI.login({ email, password });
+  /* =========================================
+     Login
+  ========================================= */
 
-    const data         = res.data?.data;
-    const userData     = data?.user;
-    const accessToken  = data?.accessToken;
-    const refreshToken = data?.refreshToken;
+  const login = async (
+    email: string,
+    password: string
+  ): Promise<UserProfile> => {
+    const response =
+      await authAPI.login({
+        email,
+        password,
+      });
 
-    if (!userData || !accessToken) {
-      throw new Error("Invalid login response from server");
+    const data =
+      response.data?.data;
+
+    const accessToken =
+      data?.accessToken;
+
+    const refreshToken =
+      data?.refreshToken;
+
+    const parsed =
+      parseUser(data?.user);
+
+    if (
+      !parsed ||
+      !accessToken
+    ) {
+      throw new Error(
+        "Invalid login response"
+      );
     }
 
-    const parsed = parseUser(userData);
-    if (!parsed) throw new Error("Could not parse user data");
+    localStorage.setItem(
+      "accessToken",
+      accessToken
+    );
 
-    localStorage.setItem("accessToken",  accessToken);
-    if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
-    localStorage.setItem("user", JSON.stringify(parsed));
+    if (refreshToken) {
+      localStorage.setItem(
+        "refreshToken",
+        refreshToken
+      );
+    }
+
+    localStorage.setItem(
+      "user",
+      JSON.stringify(parsed)
+    );
+
     setUser(parsed);
 
     return parsed;
   };
 
-  /* ── register ── */
-  const register = useCallback(async (data: any): Promise<{ email: string }> => {
-    const res   = await authAPI.register(data);
-    const email = res.data?.email || data.email;
-    // No tokens at this stage — user must verify OTP first
-    return { email };
-  }, []);
+  /* =========================================
+     Register
+  ========================================= */
+
+  const register =
+    async (
+      data: RegisterData
+    ): Promise<{
+      email: string;
+    }> => {
+      const response =
+        await authAPI.register(
+          data
+        );
+
+      return {
+        email:
+          response.data
+            ?.email ??
+          data.email,
+      };
+    };
+
+  /* =========================================
+     Logout
+  ========================================= */
+
+  const logout =
+    async (): Promise<void> => {
+      try {
+        await authAPI.logout();
+      } catch {}
+
+      localStorage.removeItem(
+        "accessToken"
+      );
+
+      localStorage.removeItem(
+        "refreshToken"
+      );
+
+      localStorage.removeItem(
+        "user"
+      );
+
+      setUser(null);
+
+      window.location.href =
+        "/login";
+    };
 
   return (
     <AuthContext.Provider
       value={{
         user,
         loading,
-        isAuthenticated: !!user,
+        isAuthenticated:
+          !!user,
         setUser,
         login,
         register,

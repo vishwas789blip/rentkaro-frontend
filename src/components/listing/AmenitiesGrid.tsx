@@ -3,16 +3,14 @@ import {
   Dumbbell, Zap, WashingMachine, ShieldCheck, 
   Coffee, Tv, Thermometer, LucideIcon 
 } from "lucide-react";
-import { motion } from "framer-motion";
 
-// Expanded Icon Map with better defaults
 const iconMap: Record<string, LucideIcon> = {
   wifi: Wifi,
   ac: Wind,
   kitchen: UtensilsCrossed,
   parking: Car,
   gym: Dumbbell,
-  security: ShieldCheck, // Changed to Shield for better visual semantics
+  security: ShieldCheck, 
   laundry: WashingMachine,
   powerbackup: Zap,
   coffee: Coffee,
@@ -46,15 +44,28 @@ export default function AmenitiesGrid({ amenities }: AmenitiesGridProps) {
         const label = labelMap[key] || item;
 
         return (
-          <motion.div 
-            key={item}
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: index * 0.05 }}
-            whileHover={{ y: -4, scale: 1.02 }}
-            className="group flex items-center gap-4 p-4 rounded-[1.5rem] bg-white border border-slate-100 shadow-sm hover:shadow-md hover:border-emerald-100 hover:bg-emerald-50/30 transition-all duration-300"
-          >
+          <div
+  key={item}
+  className="
+    group
+    flex
+    items-center
+    gap-4
+    p-4
+    rounded-[1.5rem]
+    bg-white
+    border
+    border-slate-100
+    shadow-sm
+    hover:shadow-md
+    hover:border-emerald-100
+    hover:bg-emerald-50/30
+    hover:-translate-y-1
+    hover:scale-[1.02]
+    transition-all
+    duration-300
+  "
+>
             {/* Icon Container with subtle glow on group hover */}
             <div className="relative flex items-center justify-center h-12 w-12 rounded-2xl bg-slate-50 group-hover:bg-white group-hover:shadow-inner transition-colors">
               <Icon className="h-5 w-5 text-slate-400 group-hover:text-emerald-600 transition-colors" />
@@ -71,8 +82,7 @@ export default function AmenitiesGrid({ amenities }: AmenitiesGridProps) {
                 {label}
               </span>
             </div>
-          </motion.div>
-        );
+          </div>);
       })}
     </div>
   );

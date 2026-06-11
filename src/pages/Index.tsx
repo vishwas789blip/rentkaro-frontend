@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import MainLayout from "@/layouts/MainLayout";
 import ListingCard from "@/components/ListingCard";
-import { listingAPI } from "@/services/api";
+import { listingAPI } from "@/api";
 import { Search, Shield, Star, Clock, ArrowRight, MapPin, Sparkles } from "lucide-react";
 
 const features = [

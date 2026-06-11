@@ -1,7 +1,10 @@
 import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo, useRef, lazy, Suspense } from "react";
 import MainLayout from "@/layouts/MainLayout";
-import { listingAPI, reviewAPI } from "@/services/api";
+
+// FIX 1: Import from correct path — @/services/api not @/api
+import { listingAPI, reviewAPI } from "@/api";
+
 import {
   MapPin, Star, Share, Heart, ChevronLeft,
   ShieldCheck, CheckCircle2, Link2
@@ -9,42 +12,48 @@ import {
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 
-import ImageGallery  from "../components/listing/ImageGallery";
-import AmenitiesGrid from "../components/listing/AmenitiesGrid";
-import BookingCard   from "../components/listing/BookingCard";
-import ReviewForm    from "../components/listing/ReviewForm";
-import ReviewList    from "../components/listing/ReviewList";
+const ImageGallery  = lazy(() => import("../components/listing/ImageGallery"));
+const AmenitiesGrid = lazy(() => import("../components/listing/AmenitiesGrid"));
+const BookingCard   = lazy(() => import("../components/listing/BookingCard"));
+const ReviewForm    = lazy(() => import("../components/listing/ReviewForm"));
+const ReviewList    = lazy(() => import("../components/listing/ReviewList"));
+
+import { Review }  from "@/types/review.types";
+import { Listing } from "@/types/listing.types";
 
 const ListingDetail = () => {
-  const { id }       = useParams();
-  const navigate     = useNavigate();
-  const location     = useLocation();
+  const { id }     = useParams();
+  const navigate   = useNavigate();
+  const location   = useLocation();
   const { user, isAuthenticated } = useAuth();
 
-  // FIX: false se shuru karo — true se shuru karne par component mount hote
-  // hi loading screen flash karta hai chahe sahi route pe ho ya nahi
-  const [listing, setListing]                   = useState<any>(null);
-  const [reviews, setReviews]                   = useState<any[]>([]);
-  const [loading, setLoading]                   = useState(false);
+  const [listing,          setListing]          = useState<Listing | null>(null);
+  const [reviews,          setReviews]          = useState<Review[]>([]);
+  const [loading,          setLoading]          = useState(false);
   const [submittingReview, setSubmittingReview] = useState(false);
-  const [saved, setSaved]                       = useState(false);
-  const [shareOpen, setShareOpen]               = useState(false);
+  const [saved,            setSaved]            = useState(false);
+  const [shareOpen,        setShareOpen]        = useState(false);
   const shareRef = useRef<HTMLDivElement>(null);
 
+  // ── Fetch reviews ────────────────────────────────────────
   const fetchReviews = async () => {
     try {
-      const res  = await reviewAPI.getByListing(id);
-      const data = res.data?.data?.reviews || res.data?.data || [];
+      const res = await reviewAPI.getByListing(id);
+      // FIX 2: Handle all possible response shapes from backend
+      const data =
+        res.data?.data?.reviews ||   // { data: { reviews: [] } }
+        res.data?.reviews       ||   // { reviews: [] }
+        res.data?.data          ||   // { data: [] }
+        res.data                ||   // []
+        [];
       setReviews(Array.isArray(data) ? data : []);
     } catch {
       setReviews([]);
     }
   };
 
+  // ── Fetch listing + reviews ───────────────────────────────
   useEffect(() => {
-    // FIX: MongoDB ObjectId hamesha 24 hex characters ka hota hai
-    // "register", "login", "verify-email" jaise strings pe API call bilkul mat karo
-    // Yahi woh flash tha — id="register" ke saath ListingDetail mount ho raha tha
     if (!id || !/^[a-f\d]{24}$/i.test(id)) return;
 
     const fetchData = async () => {
@@ -54,7 +63,7 @@ const ListingDetail = () => {
         const listingRes = await listingAPI.getById(id);
         const data =
           listingRes.data?.data?.listing ??
-          listingRes.data?.data ??
+          listingRes.data?.data          ??
           listingRes.data;
 
         if (!data) throw new Error("Listing not found");
@@ -73,6 +82,7 @@ const ListingDetail = () => {
     fetchData();
   }, [id]);
 
+  // ── Close share dropdown on outside click ────────────────
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (shareRef.current && !shareRef.current.contains(e.target as Node)) {
@@ -83,6 +93,7 @@ const ListingDetail = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [shareOpen]);
 
+  // ── Derived values ────────────────────────────────────────
   const ownerId = useMemo(() => {
     if (!listing?.owner) return null;
     return typeof listing.owner === "object"
@@ -102,20 +113,17 @@ const ListingDetail = () => {
       const avg = listing?.rating?.average;
       return avg ? Number(avg).toFixed(1) : "New";
     }
-    const sum = reviews.reduce((acc: number, r: any) => acc + r.rating, 0);
+    const sum = reviews.reduce((acc, r) => acc + r.rating, 0);
     return (sum / reviews.length).toFixed(1);
   }, [reviews, listing]);
 
-  const currentUserId = useMemo(() => {
-    if (!user) return null;
-    return (user as any)._id?.toString() || (user as any).id?.toString();
-  }, [user]);
-
+  const currentUserId = user?.id ?? null;
   const isOwner = useMemo(
     () => !!(currentUserId && ownerId && currentUserId === ownerId),
     [currentUserId, ownerId]
   );
 
+  // ── Handlers ──────────────────────────────────────────────
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
@@ -131,18 +139,36 @@ const ListingDetail = () => {
       toast.error("Please login to leave a review");
       return navigate("/login", { state: { from: location.pathname } });
     }
+
     setSubmittingReview(true);
     try {
-      const res = await reviewAPI.create({ listingId: id, ...reviewData });
+      const payload = {
+        listingId:  id,        // try standard field first
+        rating:     reviewData.rating,
+        comment:    reviewData.comment,
+      };
+
+      const res = await reviewAPI.create(payload);
+
       toast.success("Review posted successfully!");
-      const newReview = res.data?.data?.review || res.data?.data;
+
+      // FIX 4: Handle all response shapes for new review
+      const newReview =
+        res.data?.data?.review ||
+        res.data?.data         ||
+        res.data?.review       ||
+        null;
+
       if (newReview) {
-        setReviews((prev) => [newReview, ...prev]);
+        setReviews(prev => [newReview, ...prev]);
       } else {
+        // Fallback: refetch all reviews
         await fetchReviews();
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to post review");
+      const msg = error.response?.data?.message || "Failed to post review";
+      toast.error(msg);
+      throw error;
     } finally {
       setSubmittingReview(false);
     }
@@ -154,10 +180,10 @@ const ListingDetail = () => {
       return navigate("/login", { state: { from: location.pathname } });
     }
     if (isOwner) return toast.error("You cannot book your own property!");
-    navigate(`/booking/${listing._id}`);
+    navigate(`/booking/${listing!._id}`);
   };
 
-  // Sirf valid ObjectId pe actual loading screen dikhao
+  // ── Render ────────────────────────────────────────────────
   if (loading) return (
     <MainLayout>
       <div className="flex flex-col items-center justify-center min-h-[80vh] gap-4">
@@ -169,13 +195,19 @@ const ListingDetail = () => {
     </MainLayout>
   );
 
-  // Invalid id ya listing nahi mili
-  if (!listing) return null;
+  if (!listing) return (
+    <MainLayout>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <p className="text-slate-500 font-semibold">Listing not found.</p>
+      </div>
+    </MainLayout>
+  );
 
   return (
     <MainLayout>
       <div className="max-w-7xl mx-auto px-6 py-8">
 
+        {/* Top nav */}
         <div className="flex justify-between items-center mb-8">
           <Link to="/listings" className="group flex items-center gap-2 text-xs font-black text-slate-400 hover:text-[#0fb478] transition-all uppercase tracking-widest">
             <ChevronLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
@@ -183,20 +215,13 @@ const ListingDetail = () => {
           </Link>
           <div className="flex gap-2">
             <div className="relative" ref={shareRef}>
-              <button
-                onClick={() => setShareOpen((prev) => !prev)}
-                className="p-3 hover:bg-slate-100 rounded-2xl transition-all border border-slate-100"
-              >
+              <button onClick={() => setShareOpen(p => !p)} className="p-3 hover:bg-slate-100 rounded-2xl transition-all border border-slate-100">
                 <Share size={18} className="text-slate-600" />
               </button>
               {shareOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-100 rounded-2xl shadow-lg z-50 overflow-hidden">
-                  <button
-                    onClick={handleCopyLink}
-                    className="w-full flex items-center gap-3 px-5 py-4 text-xs font-black uppercase tracking-widest text-slate-700 hover:bg-slate-50 transition-all"
-                  >
-                    <Link2 size={15} className="text-[#0fb478]" />
-                    Copy Link
+                  <button onClick={handleCopyLink} className="w-full flex items-center gap-3 px-5 py-4 text-xs font-black uppercase tracking-widest text-slate-700 hover:bg-slate-50 transition-all">
+                    <Link2 size={15} className="text-[#0fb478]" /> Copy Link
                   </button>
                 </div>
               )}
@@ -204,9 +229,7 @@ const ListingDetail = () => {
             <button
               onClick={() => setSaved(!saved)}
               className={`flex items-center gap-2 px-5 py-3 rounded-2xl transition-all font-black text-xs uppercase tracking-widest border ${
-                saved
-                  ? "bg-red-50 border-red-100 text-red-600"
-                  : "bg-white border-slate-200 hover:bg-slate-50"
+                saved ? "bg-red-50 border-red-100 text-red-600" : "bg-white border-slate-200 hover:bg-slate-50"
               }`}
             >
               <Heart size={16} className={saved ? "fill-red-500" : ""} />
@@ -215,6 +238,7 @@ const ListingDetail = () => {
           </div>
         </div>
 
+        {/* Title */}
         <div className="mb-10">
           <h1 className="text-4xl md:text-5xl font-black text-[#1a332e] mb-4 tracking-tight leading-tight uppercase">
             {listing.title}
@@ -234,11 +258,16 @@ const ListingDetail = () => {
           </div>
         </div>
 
-        <ImageGallery images={listing.images || []} />
+        {/* Gallery */}
+        <Suspense fallback={<div className="h-96 bg-slate-100 rounded-3xl animate-pulse" />}>
+          <ImageGallery images={listing.images || []} />
+        </Suspense>
 
+        {/* Body */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 mt-12">
           <div className="lg:col-span-8 space-y-16">
 
+            {/* Host */}
             <div className="bg-white p-8 rounded-[2.8rem] shadow-sm border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-8">
               <div className="flex items-center gap-6">
                 <div className="h-20 w-20 rounded-[2rem] bg-[#0fb478] flex items-center justify-center text-white font-black text-3xl shadow-xl border-4 border-white uppercase">
@@ -256,43 +285,54 @@ const ListingDetail = () => {
               </div>
             </div>
 
+            {/* Description */}
             <section>
-              <h3 className="text-3xl font-black text-[#1a332e] mb-6 uppercase tracking-tighter">
-                About property
-              </h3>
+              <h3 className="text-3xl font-black text-[#1a332e] mb-6 uppercase tracking-tighter">About property</h3>
               <p className="text-slate-600 leading-[1.8] text-lg font-medium whitespace-pre-line">
                 {listing.description}
               </p>
             </section>
 
+            {/* Amenities */}
             <section>
-              <h3 className="text-3xl font-black text-[#1a332e] mb-8 tracking-tighter uppercase">
-                Amenities
-              </h3>
-              <AmenitiesGrid amenities={listing.amenities || []} />
+              <h3 className="text-3xl font-black text-[#1a332e] mb-8 tracking-tighter uppercase">Amenities</h3>
+              <Suspense fallback={<div>Loading...</div>}>
+                <AmenitiesGrid amenities={listing.amenities || []} />
+              </Suspense>
             </section>
 
+            {/* Reviews */}
             <section className="pt-16 border-t border-slate-100">
               <h3 className="text-3xl font-black text-[#1a332e] mb-10 flex items-center gap-4 uppercase tracking-tighter">
                 Reviews <div className="h-2 w-2 rounded-full bg-[#0fb478]" />
               </h3>
+
               {isAuthenticated && !isOwner && (
                 <div className="mb-12">
-                  <ReviewForm onSubmit={handleReviewSubmit} submitting={submittingReview} />
+                  <Suspense fallback={<div>Loading...</div>}>
+                    <ReviewForm onSubmit={handleReviewSubmit} submitting={submittingReview} />
+                  </Suspense>
                 </div>
               )}
-              <ReviewList reviews={reviews} setReviews={setReviews} />
+
+              <Suspense fallback={<div>Loading reviews...</div>}>
+                <ReviewList reviews={reviews} setReviews={setReviews} />
+              </Suspense>
             </section>
+
           </div>
 
+          {/* Booking sidebar */}
           <aside className="lg:col-span-4">
             <div className="sticky top-24 space-y-6">
-              <BookingCard
-                price={listing.pricePerMonth}
-                rating={avgRating}
-                gender={listing.genderType || "Any"}
-                onBook={handleBooking}
-              />
+              <Suspense fallback={<div>Loading...</div>}>
+                <BookingCard
+                  price={listing.pricePerMonth}
+                  rating={avgRating}
+                  gender={listing.genderType || "Any"}
+                  onBook={handleBooking}
+                />
+              </Suspense>
               <div className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 flex gap-4">
                 <ShieldCheck className="text-[#0fb478] shrink-0" size={24} />
                 <div>
@@ -305,6 +345,7 @@ const ListingDetail = () => {
             </div>
           </aside>
         </div>
+
       </div>
     </MainLayout>
   );

@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import MainLayout from "@/layouts/MainLayout";
 import ListingCard from "@/components/ListingCard";
 import SkeletonCard from "@/components/SkeletonCard";
-import { listingAPI } from "@/services/api";
+import { listingAPI } from "@/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

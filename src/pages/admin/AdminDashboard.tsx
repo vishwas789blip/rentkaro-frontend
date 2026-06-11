@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { Users, Home, IndianRupee } from "lucide-react";
-import { userAPI } from "@/services/api";
-import apiClient from "@/services/api";
+import { userAPI } from "@/api";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface AdminUser {

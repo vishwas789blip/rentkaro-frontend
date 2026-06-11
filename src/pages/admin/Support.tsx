@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "@/layouts/DashboardLayout";
-import { supportAPI } from "@/services/api";
+import { supportAPI } from "@/api";
 import { X } from "lucide-react";
 
 export default function AdminSupport() {
@@ -12,14 +12,11 @@ export default function AdminSupport() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fetchTickets = async () => {
-    console.log("fetchTickets called");
 
     try {
       setLoading(true);
 
       const res = await supportAPI.getAll();
-
-      console.log("Support Response:", res.data);
 
       const ticketsData =
         res.data?.data?.tickets ||
@@ -29,8 +26,7 @@ export default function AdminSupport() {
 
       setTickets(Array.isArray(ticketsData) ? ticketsData : []);
     } catch (err) {
-      console.error("Fetch error:", err);
-      setTickets([]);
+                setTickets([]);
     } finally {
       setLoading(false);
     }
@@ -60,7 +56,6 @@ export default function AdminSupport() {
 
       fetchTickets();
     } catch (err) {
-      console.error("Reply error:", err);
       alert("Failed to send reply");
     } finally {
       setIsSubmitting(false);

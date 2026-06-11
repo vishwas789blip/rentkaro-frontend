@@ -3,16 +3,15 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { AuthProvider } from "@/context/AuthContext";
-import ProtectedRoute from "@/components/ProtectedRoute";
+import ProtectedRoute from "@/routes/ProtectedRoute";
 import ScrollToTop from "@/components/ScrollToTop";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import Unauthorized from "@/pages/Unauthorized";
 
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
 
 /* ================================
    React Query Client
@@ -21,29 +20,14 @@ import "leaflet/dist/leaflet.css";
 const queryClient = new QueryClient();
 
 /* ================================
-   Leaflet Marker Fix
-================================ */
-
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl:
-    "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
-  iconUrl:
-    "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
-  shadowUrl:
-    "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
-});
-
-/* ================================
    Lazy Loaded Pages
 ================================ */
 
 const Index = lazy(() => import("./pages/Index"));
 const Login = lazy(() => import("./pages/Login"));
 const Register = lazy(() => import("./pages/Register"));
-import VerifyEmail from "./pages/VerifyEmail"; 
-import ForgotPassword  from "./pages/ForgotPassward";
+const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassward"));
 const Listings = lazy(() => import("./pages/Listings"));
 const ListingDetail = lazy(() => import("./pages/ListingDetail"));
 
@@ -56,19 +40,16 @@ const BookingPage = lazy(() => import("./pages/BookingPage"));
 
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 
-// ... other imports
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Terms = lazy(() => import("./pages/Terms"));
 
-// ✅ Change this line to point to your new help.tsx file
 const Help = lazy(() => import("./pages/Help")); 
 
-// Ensure Admin Support still points to the admin version
 const AdminSupport = lazy(() => import("./pages/admin/Support"));
 
 const AllListings = lazy(() => import("./pages/admin/AllListings"));
 
-const UserSettings = lazy(() => import("./pages/users/UserSettings"));
+const UserSettings = lazy(() => import("./pages/users/ChangePassward"));
 const MyBookings = lazy(() => import("./pages/users/MyBookings"));
 
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -127,6 +108,11 @@ const App = () => {
                         <BookingPage />
                       </ProtectedRoute>
                     }
+                  />
+
+                  <Route
+                    path="/unauthorized"
+                    element={<Unauthorized />}
                   />
 
                   {/* ================= USER DASHBOARD ================= */}

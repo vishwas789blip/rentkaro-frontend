@@ -25,3 +25,4 @@ coverage/
 *.log
 .vercel
 .env*.local
+.static.html

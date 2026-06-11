@@ -1,171 +1,207 @@
 import { useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import { authAPI } from "@/services/api";
+import { authAPI } from "@/api";
 import { toast } from "sonner";
-import { ArrowRight, Mail, Loader2, CheckCircle2, RotateCcw } from "lucide-react";
+import { Mail, CheckCircle2 } from "lucide-react";
+
+// ── Reusing shared components (same as ForgotPassword) ────────
+import OTPBoxes      from "@/components/OTPBoxes";
+import PrimaryButton from "@/components/PrimaryButton";
+import Alert         from "@/components/Alert";
+import { Input, Label, InputWrapper } from "@/components/FormInput";
+
+// ── Reusing utils ─────────────────────────────────────────────
+import { isValidOTP, isValidEmail, maskEmail, formatCountdown, getRemainingSeconds } from "@/lib/utils";
+import { useEffect } from "react";
+
+const RESEND_TTL = 60; // seconds
 
 export default function VerifyEmail() {
   const navigate  = useNavigate();
   const location  = useLocation();
 
-  // Email register page se state mein aata hai
   const prefillEmail = (location.state as any)?.email || "";
 
-  const [email, setEmail]       = useState(prefillEmail);
-  const [otp, setOtp]           = useState("");
-  const [isLoading, setIsLoading]   = useState(false);
-  const [isResending, setIsResending] = useState(false);
-  const [isSuccess, setIsSuccess]   = useState(false);
-  const [resendCooldown, setResendCooldown] = useState(0);
+  const [email,      setEmail]      = useState(prefillEmail);
+  const [otp,        setOtp]        = useState("");
+  const [loading,    setLoading]    = useState(false);
+  const [resending,  setResending]  = useState(false);
+  const [success,    setSuccess]    = useState(false);
+  const [error,      setError]      = useState("");
+  const [message,    setMessage]    = useState("");
 
-  // Countdown timer for resend button
-  const startCooldown = (seconds: number) => {
-    setResendCooldown(seconds);
-    const interval = setInterval(() => {
-      setResendCooldown((prev) => {
-        if (prev <= 1) { clearInterval(interval); return 0; }
-        return prev - 1;
-      });
+  // Countdown timer — reusing getRemainingSeconds + formatCountdown from utils
+  const [sentAt,    setSentAt]    = useState<number | null>(Date.now()); // starts on mount since OTP already sent at register
+  const [countdown, setCountdown] = useState(RESEND_TTL);
+
+  useEffect(() => {
+    if (!sentAt) return;
+    const tick = setInterval(() => {
+      const rem = getRemainingSeconds(sentAt, RESEND_TTL);
+      setCountdown(rem);
+      if (rem === 0) clearInterval(tick);
     }, 1000);
-  };
+    return () => clearInterval(tick);
+  }, [sentAt]);
 
+  const clear = () => { setError(""); setMessage(""); };
+
+  // ── Verify ────────────────────────────────────────────────
   const handleVerify = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!otp || otp.length !== 6) {
-      toast.error("Please enter the 6-digit OTP");
-      return;
-    }
+    e.preventDefault(); clear();
+    if (!isValidOTP(otp)) return setError("Please enter the complete 6-digit OTP");
 
-    setIsLoading(true);
+    setLoading(true);
     try {
       await authAPI.verifyEmail({ email, otp });
-      setIsSuccess(true);
-      toast.success("Email verified! Redirecting to login...");
+      setSuccess(true);
+      setMessage("Email verified! Redirecting to login...");
+      toast.success("Email verified!");
       setTimeout(() => navigate("/login", { replace: true }), 1500);
     } catch (err: any) {
-      toast.error(err.response?.data?.message || "Invalid OTP. Please try again.");
+      setError(err.response?.data?.message || "Invalid OTP. Please try again.");
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
+  // ── Resend ────────────────────────────────────────────────
   const handleResend = async () => {
-    if (resendCooldown > 0 || isResending) return;
-    setIsResending(true);
+    if (countdown > 0 || resending) return;
+    clear();
+    setResending(true);
     try {
       await authAPI.resendOtp({ email });
-      toast.success("New OTP sent to your email!");
-      startCooldown(60);
+      setOtp("");
+      setSentAt(Date.now());
+      setCountdown(RESEND_TTL);
+      setMessage("New OTP sent to your email!");
     } catch (err: any) {
-      const message = err.response?.data?.message || "Failed to resend OTP";
-      // Backend returns 429 with wait time — show it
-      toast.error(message);
-      if (message.includes("wait")) startCooldown(60);
+      const msg = err.response?.data?.message || "Failed to resend OTP";
+      setError(msg);
+      if (msg.toLowerCase().includes("wait")) {
+        setSentAt(Date.now());
+        setCountdown(RESEND_TTL);
+      }
     } finally {
-      setIsResending(false);
+      setResending(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen bg-white items-center justify-center px-6">
-      <div className="w-full max-w-md space-y-10">
+    <div style={{
+      minHeight: "100vh", display: "flex", alignItems: "center",
+      justifyContent: "center", padding: "24px",
+      background: "#fff", fontFamily: "Inter, system-ui, sans-serif",
+    }}>
+      <div style={{ width: "100%", maxWidth: 420 }}>
 
         {/* Icon */}
-        <div className="flex justify-center">
-          <div className="h-20 w-20 rounded-[2rem] bg-emerald-50 flex items-center justify-center">
-            {isSuccess
-              ? <CheckCircle2 size={36} className="text-emerald-500" />
-              : <Mail size={36} className="text-[#0fb478]" />
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 28 }}>
+          <div style={{
+            width: 80, height: 80, borderRadius: 24,
+            background: "#ECFDF5",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            {success
+              ? <CheckCircle2 size={36} color="#10B981" />
+              : <Mail        size={36} color="#1DB47F" />
             }
           </div>
         </div>
 
         {/* Heading */}
-        <div className="text-center space-y-3">
-          <h2 className="text-4xl font-black text-[#1a332e]">
-            {isSuccess ? "Verified!" : "Check your email"}
+        <div style={{ textAlign: "center", marginBottom: 28 }}>
+          <h2 style={{ fontSize: 32, fontWeight: 800, color: "#111827", margin: "0 0 10px", fontFamily: "Georgia, serif" }}>
+            {success ? "Verified!" : "Check your email"}
           </h2>
-          <p className="text-[#4a635d] font-medium">
-            {isSuccess
+          <p style={{ color: "#6B7280", fontSize: 14, lineHeight: 1.6, margin: 0 }}>
+            {success
               ? "Your account is ready. Redirecting to login..."
-              : <>We sent a 6-digit code to <span className="font-black text-[#1a332e]">{email || "your email"}</span></>
+              : <>We sent a 6-digit code to{" "}
+                  <strong style={{ color: "#111827" }}>
+                    {email ? maskEmail(email) : "your email"}
+                  </strong>
+                  {countdown > 0 && <>. Expires in <strong style={{ color: "#EF4444" }}>{formatCountdown(countdown)}</strong></>}
+                </>
             }
           </p>
         </div>
 
-        {!isSuccess && (
-          <form onSubmit={handleVerify} className="space-y-8">
-            {/* Email field — editable in case user came from login error */}
+        {/* Alerts — reusing Alert component */}
+        {message && <Alert type="success" message={message} />}
+        {error   && <Alert type="error"   message={error}   />}
+
+        {!success && (
+          <form onSubmit={handleVerify}>
+
+            {/* Email field — only show if not prefilled from register */}
             {!prefillEmail && (
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-[#0fb478] ml-1">
-                  Email Address
-                </label>
-                <input
-                  type="email" value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-2xl bg-[#f8faf9] py-4 px-5 font-bold text-[#1a332e] outline-none border-2 border-transparent focus:border-[#0fb478] focus:bg-white transition-all"
-                  placeholder="john@example.com" required
+              <InputWrapper>
+                <Label>Email Address</Label>
+                <Input
+                  type="email"
+                  placeholder="john@example.com"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  required
                 />
-              </div>
+              </InputWrapper>
             )}
 
-            {/* OTP input */}
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-[#0fb478] ml-1">
-                OTP Code
-              </label>
-              <input
-                type="text"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                className="w-full rounded-2xl bg-[#f8faf9] py-5 px-5 font-black text-[#1a332e] text-center tracking-[0.5em] text-2xl outline-none border-2 border-transparent focus:border-[#0fb478] focus:bg-white transition-all"
-                placeholder="000000"
-                maxLength={6}
-                inputMode="numeric"
-                required
-              />
-              <p className="text-[10px] font-bold text-[#4a635d] ml-1">
-                Code expires in 10 minutes
-              </p>
-            </div>
+            {/* OTP boxes — reusing OTPBoxes component */}
+            <InputWrapper>
+              <Label>One-Time Password</Label>
+              <OTPBoxes value={otp} onChange={setOtp} />
+            </InputWrapper>
 
-            {/* Verify button */}
-            <button
-              type="submit" disabled={isLoading || otp.length !== 6}
-              className="group flex w-full items-center justify-center gap-3 rounded-2xl bg-[#1a332e] py-5 text-lg font-black text-white transition-all hover:bg-black active:scale-[0.98] disabled:opacity-50"
+            {/* Verify button — reusing PrimaryButton */}
+            <PrimaryButton
+              type="submit"
+              loading={loading}
+              disabled={!isValidOTP(otp)}
             >
-              {isLoading
-                ? <Loader2 className="h-6 w-6 animate-spin" />
-                : <><span>Verify Email</span><ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" /></>
-              }
-            </button>
+              Verify Email →
+            </PrimaryButton>
 
-            {/* Resend */}
-            <div className="text-center">
-              <button
-                type="button"
-                onClick={handleResend}
-                disabled={isResending || resendCooldown > 0}
-                className="flex items-center gap-2 mx-auto text-sm font-black text-[#4a635d] hover:text-[#0fb478] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <RotateCcw size={14} className={isResending ? "animate-spin" : ""} />
-                {resendCooldown > 0
-                  ? `Resend in ${resendCooldown}s`
-                  : isResending
-                  ? "Sending..."
-                  : "Resend OTP"
-                }
-              </button>
+            {/* Resend row */}
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 16 }}>
+              <Link to="/login" style={{ fontSize: 13, color: "#6B7280", textDecoration: "none", fontWeight: 500 }}>
+                ← Back to Login
+              </Link>
+
+              {countdown === 0 ? (
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={resending}
+                  style={{
+                    background: "none", border: "none",
+                    color: "#1DB47F", fontSize: 13, fontWeight: 700,
+                    cursor: resending ? "not-allowed" : "pointer", padding: 0,
+                  }}
+                >
+                  {resending ? "Sending..." : "Resend OTP"}
+                </button>
+              ) : (
+                <span style={{ fontSize: 13, color: "#9CA3AF" }}>
+                  Resend in {formatCountdown(countdown)}
+                </span>
+              )}
             </div>
+
           </form>
         )}
 
-        <div className="text-center">
-          <Link to="/login" className="text-sm font-black text-[#4a635d] hover:text-[#0fb478] transition-colors">
-            ← Back to Login
-          </Link>
-        </div>
+        {/* Back to login when success */}
+        {success && (
+          <div style={{ textAlign: "center", marginTop: 20 }}>
+            <Link to="/login" style={{ fontSize: 13, color: "#6B7280", textDecoration: "none", fontWeight: 600 }}>
+              ← Back to Login
+            </Link>
+          </div>
+        )}
+
       </div>
     </div>
   );

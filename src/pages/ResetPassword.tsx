@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import apiClient from "@/services/api";
+import { authAPI } from "@/api";
 
 const ChangePassword = () => {
   const [oldPassword, setOldPassword] = useState("");
@@ -33,7 +33,7 @@ const ChangePassword = () => {
     try {
       setLoading(true);
 
-      await apiClient.post("/auth/change-password", {
+      await authAPI.changePassword({
         oldPassword,
         newPassword,
       });

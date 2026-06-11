@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import DashboardLayout from "@/layouts/DashboardLayout";
-import { bookingAPI } from "@/services/api";
+import { bookingAPI } from "@/api";
 import { useAuth } from "@/context/AuthContext";
 import { CalendarDays, MapPin, AlertCircle, Loader2, IndianRupee, ArrowRight } from "lucide-react";
 import { toast } from "sonner";

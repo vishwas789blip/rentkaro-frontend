@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { listingAPI } from "@/services/api";
+import { listingAPI } from "@/api";
 import {
   Plus, X, Sparkles, Loader2, ArrowLeft,
   MapPin, Home, IndianRupee, UploadCloud, CheckCircle2

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/layouts/DashboardLayout";
-import { listingAPI } from "@/services/api";
+import { listingAPI } from "@/api";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Edit, Trash2, MapPin, Home, Plus, Loader2 } from "lucide-react";

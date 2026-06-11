@@ -4,7 +4,7 @@ import {
   ChevronDown, Send, MessageCircle, Clock, 
   History, CheckCircle, HelpCircle, ShieldQuestion, LifeBuoy
 } from "lucide-react";
-import { supportAPI } from "@/services/api";
+import { supportAPI } from "@/api";
 import { useAuth } from "@/context/AuthContext";
 
 export default function Help() {

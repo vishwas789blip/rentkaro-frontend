@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "@/layouts/DashboardLayout";
-import { supportAPI } from "@/services/api";
+import { supportAPI } from "@/api";
 import { useAuth } from "@/context/AuthContext";
 import { MessageCircle, Clock, AlertCircle, Loader2 } from "lucide-react";
 

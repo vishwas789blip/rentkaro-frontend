@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { authAPI } from '@/services/api';
+import { authAPI } from '@/api';
 import LeftPanel from '@/components/LeftPanel';
 import StepIndicator from '@/components/StepIndicator';
 import OTPBoxes from '@/components/OTPBoxes';
