@@ -49,12 +49,11 @@ const AdminSupport = lazy(() => import("./pages/admin/Support"));
 
 const AllListings = lazy(() => import("./pages/admin/AllListings"));
 
-const UserSettings = lazy(() => import("./pages/users/ChangePassward"));
 const MyBookings = lazy(() => import("./pages/users/MyBookings"));
 
 const NotFound = lazy(() => import("./pages/NotFound"));
 const EditListing = lazy(() => import("./pages/pg_Owner/EditListing"));
-const OwnerListings = lazy(() => import("./pages/pg_Owner/OwnerListings")); // Adjust path if needed
+const OwnerListings = lazy(() => import("./pages/pg_Owner/OwnerListings")); 
 
 /* ================================
    Loading Component
@@ -131,15 +130,6 @@ const App = () => {
                     element={
                       <ProtectedRoute allowedRoles={["user"]}>
                         <MyBookings />
-                      </ProtectedRoute>
-                    }
-                  />
-
-                  <Route
-                    path="/dashboard/user/settings"
-                    element={
-                      <ProtectedRoute allowedRoles={["user"]}>
-                        <UserSettings />
                       </ProtectedRoute>
                     }
                   />
