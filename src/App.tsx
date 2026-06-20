@@ -133,6 +133,14 @@ const App = () => {
                       </ProtectedRoute>
                     }
                   />
+                  <Route
+                    path="/change-password"
+                    element={
+                      <ProtectedRoute allowedRoles={["user", "pg_owner", "admin"]}>
+                        <ResetPassword />
+                      </ProtectedRoute>
+                    }
+                  />
 
                   {/* ================= OWNER DASHBOARD ================= */}
 

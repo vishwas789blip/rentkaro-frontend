@@ -10,9 +10,7 @@ import PrimaryButton from "@/components/PrimaryButton";
 import Alert         from "@/components/Alert";
 import { Input, Label, InputWrapper } from "@/components/FormInput";
 
-// ── LeftPanel needs a Step type — Login has its own static content ──
-// We pass a fixed "LOGIN" step; LeftPanel already handles unknown steps gracefully
-// so we extend it with a LOGIN variant via a wrapper
+// ── LeftPanel needs a Step type 
 const LoginLeftPanel = () => (
   <div style={{
     width: "40%",

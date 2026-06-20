@@ -2,22 +2,73 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
-import {
-  ArrowRight, User, Mail, Phone, Lock,
-  ShieldCheck, Loader2, Building2, Eye, EyeOff
-} from "lucide-react";
+import { Eye, EyeOff, CheckCircle2, ShieldCheck, Building2, Loader2 } from "lucide-react";
 
+// ── Reusing your exact platform layout components ─────────────────
+import PrimaryButton from "@/components/PrimaryButton";
+import Alert         from "@/components/Alert";
+import { Input, Label, InputWrapper } from "@/components/FormInput";
+
+// ── Matching Structured Left Side Panel ────────────────────────
+const RegisterLeftPanel = () => (
+  <div style={{
+    width: "40%",
+    background: "linear-gradient(145deg, #0f9660 0%, #1DB47F 60%, #16a871 100%)",
+    padding: "48px 40px",
+    display: "flex", flexDirection: "column", justifyContent: "space-between",
+    position: "relative", overflow: "hidden", minHeight: "100vh",
+  }}>
+    <div style={{ position: "absolute", top: -60, right: -60, width: 220, height: 220, borderRadius: "50%", background: "rgba(255,255,255,0.07)" }} />
+    <div style={{ position: "absolute", bottom: -40, left: -40, width: 160, height: 160, borderRadius: "50%", background: "rgba(255,255,255,0.05)" }} />
+
+    {/* Brand Logo */}
+    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      <div style={{ width: 36, height: 36, background: "rgba(255,255,255,0.2)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>🏠</div>
+      <Link to="/" style={{ color: "#fff", fontSize: 20, fontWeight: 700, fontFamily: "Georgia, serif", textDecoration: "none" }}>
+        RentKaroo
+      </Link>
+    </div>
+
+    {/* Brand Promotion Context */}
+    <div>
+      <div style={{ fontSize: 40, marginBottom: 20 }}>🚀</div>
+      <h1 style={{ color: "#fff", fontSize: 36, fontWeight: 800, lineHeight: 1.15, margin: "0 0 16px", fontFamily: "Georgia, serif" }}>
+        Start your<br />journey here.
+      </h1>
+      <p style={{ color: "rgba(255,255,255,0.8)", fontSize: 15, lineHeight: 1.6, margin: "0 0 32px" }}>
+        Join the most trusted PG network in the city. Access exclusive discounts, direct owner mappings, and priority viewings instantly.
+      </p>
+      {[
+        { icon: <ShieldCheck size={16} />, text: "100% Verified Properties" },
+        { icon: <Building2 size={16} />, text: "500+ Active System Listings" },
+      ].map(({ icon, text }) => (
+        <div key={text} style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(255,255,255,0.12)", borderRadius: 10, padding: "12px 16px", marginBottom: 12 }}>
+          <span style={{ color: "#fff", display: "flex", alignItems: "center" }}>{icon}</span>
+          <span style={{ color: "#fff", fontSize: 13, fontFamily: "Inter, system-ui, sans-serif" }}>{text}</span>
+        </div>
+      ))}
+    </div>
+
+    <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 12, fontFamily: "Inter, system-ui, sans-serif" }}>EST. 2026</p>
+  </div>
+);
+
+// ── Main Component ────────────────────────────────────────────
 export default function Register() {
   const { register, loading } = useAuth();
   const navigate = useNavigate();
-  const [showPassword, setShowPassword]   = useState(false);
+
+  const [showPw, setShowPw] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState("");
+
   const [form, setForm] = useState({
-    name:     "",
-    email:    "",
-    phone:    "",
+    name: "",
+    email: "",
+    phone: "",
     password: "",
-    role:     "user",
+    role: "user",
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -26,175 +77,201 @@ export default function Register() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading || success) return;
+    setError("");
 
-    if (form.password !== confirmPassword) {
-      toast.error("Passwords do not match");
-      return;
-    }
-
-    if (form.password.length < 6) {
-      toast.error("Password must be at least 6 characters");
-      return;
-    }
+    if (!form.name.trim()) return setError("Please enter your full name.");
+    if (!form.email.trim()) return setError("Please enter your email address.");
+    if (!/^\d{10}$/.test(form.phone)) return setError("Phone must be exactly 10 digits.");
+    if (form.password.length < 6) return setError("Password must be at least 6 characters.");
+    if (form.password !== confirmPassword) return setError("Passwords do not match.");
 
     try {
       await register(form);
+      setSuccess(true);
       toast.success("OTP sent to your email! Please verify to continue.");
-
-      // FIX: verify-email page pe bhejo, login pe nahi
-      // email saath bhejo taaki verify form pre-fill ho sake
-      navigate("/verify-email", { state: { email: form.email } });
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || "Registration failed");
+      setTimeout(() => navigate("/verify-email", { state: { email: form.email }, replace: true }), 1000);
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Registration failed. Please try again.");
     }
   };
 
   return (
-    <div className="flex min-h-screen bg-white font-sans">
-      {/* Left panel */}
-      <div className="relative hidden w-[35%] lg:block bg-[#1a332e]">
-        <img
-          src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80"
-          alt="Luxury Stay"
-          className="absolute inset-0 h-full w-full object-cover opacity-50"
-        />
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0fb478]/80 to-[#1a332e]/95 backdrop-blur-[1px]" />
-        <div className="absolute inset-0 flex flex-col justify-between p-12 text-white">
-          <Link to="/" className="text-2xl font-black tracking-tighter">RentKaroo</Link>
-          <div className="space-y-6">
-            <h1 className="text-5xl font-black leading-tight">Start your <br />journey here.</h1>
-            <p className="text-emerald-50/80 font-medium max-w-sm">
-              Join the most trusted PG network in the city. Access exclusive discounts and priority viewings.
-            </p>
-            <div className="space-y-4 pt-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-white/10 rounded-lg"><ShieldCheck size={20} /></div>
-                <span className="text-sm font-bold">100% Verified Properties</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-white/10 rounded-lg"><Building2 size={20} /></div>
-                <span className="text-sm font-bold">500+ Active Listings</span>
-              </div>
-            </div>
-          </div>
-          <p className="text-xs font-bold opacity-40 uppercase tracking-widest">EST. 2026</p>
-        </div>
-      </div>
+    <div style={{ display: "flex", minHeight: "100vh", fontFamily: "Inter, system-ui, sans-serif" }}>
+      
+      {/* ── Left branding panel (Matches Login/ChangePassword) ── */}
+      <RegisterLeftPanel />
 
-      {/* Right panel */}
-      <div className="flex w-full flex-col justify-center px-8 lg:w-[65%] lg:px-24">
-        <div className="mx-auto w-full max-w-2xl space-y-10 py-10">
-          <div className="space-y-2">
-            <h2 className="text-4xl font-black text-[#1a332e]">Create Account</h2>
-            <p className="text-[#4a635d] font-bold italic">Sign up to find your perfect stay in seconds.</p>
-          </div>
+      {/* ── Right form panel ── */}
+      <div style={{
+        flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
+        padding: "48px 52px", background: "#fff", overflowY: "auto",
+      }}>
+        <div style={{ width: "100%", maxWidth: 520 }}>
+          
+          <h2 style={{ fontSize: 28, fontWeight: 800, color: "#111827", margin: "0 0 6px", fontFamily: "Georgia, serif" }}>
+            Create Account
+          </h2>
+          <p style={{ color: "#6B7280", fontSize: 14, marginBottom: 28, lineHeight: 1.6 }}>
+            Sign up to find or list your perfect stay framework logs in seconds.
+          </p>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+          {/* Inline Alert Components */}
+          {error && <Alert type="error" message={error} />}
+          {success && <Alert type="success" message="Registration successful! Directing to email verification pipeline..." />}
+
+          <form onSubmit={handleSubmit}>
+            
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
               {/* Full Name */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-[#0fb478] ml-1">Full Name</label>
-                <div className="relative group">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#cedcd7] group-focus-within:text-[#0fb478] transition-colors" />
-                  <input
-                    name="name" value={form.name} onChange={handleChange}
-                    className="w-full rounded-2xl border-2 border-[#f0f9f6] bg-[#f9fbfb] py-4 pl-12 pr-4 font-bold text-[#1a332e] outline-none focus:border-[#0fb478] focus:bg-white transition-all"
-                    placeholder="John Doe" minLength={2} required
-                  />
+              <InputWrapper>
+                <Label>Full Name</Label>
+                <Input
+                  icon="👤"
+                  name="name"
+                  type="text"
+                  required
+                  placeholder="John Doe"
+                  value={form.name}
+                  onChange={handleChange}
+                  disabled={loading || success}
+                />
+              </InputWrapper>
+
+              {/* Email Address */}
+              <InputWrapper>
+                <Label>Email Address</Label>
+                <Input
+                  icon="✉"
+                  name="email"
+                  type="email"
+                  required
+                  placeholder="john@example.com"
+                  value={form.email}
+                  onChange={handleChange}
+                  disabled={loading || success}
+                />
+              </InputWrapper>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+              {/* Phone Number */}
+              <InputWrapper>
+                <Label>Phone Number</Label>
+                <Input
+                  icon="📞"
+                  name="phone"
+                  type="tel"
+                  required
+                  placeholder="9410448110"
+                  value={form.phone}
+                  onChange={handleChange}
+                  disabled={loading || success}
+                />
+              </InputWrapper>
+
+              {/* Account Type Selection dropdown with absolute native properties */}
+              <InputWrapper>
+                <Label>Account Type</Label>
+                <div style={{ position: "relative" }}>
+                  <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 14, color: "#9CA3AF", pointerEvents: "none" }}>💼</span>
+                  <select
+                    name="role"
+                    value={form.role}
+                    onChange={handleChange}
+                    disabled={loading || success}
+                    style={{
+                      width: "100%",
+                      padding: "12px 12px 12px 36px",
+                      fontSize: 14,
+                      fontWeight: 600,
+                      color: "#111827",
+                      background: "#F9FAFB",
+                      border: "1.5px solid #E5E7EB",
+                      borderRadius: 12,
+                      outline: "none",
+                      cursor: "pointer",
+                      appearance: "none",
+                      transition: "all 0.2s ease"
+                    }}
+                    onFocus={(e) => (e.target.style.borderColor = "#1DB47F", e.target.style.background = "#FFF")}
+                    onBlur={(e) => (e.target.style.borderColor = "#E5E7EB", e.target.style.background = "#F9FAFB")}
+                  >
+                    <option value="user">I'm looking for a PG</option>
+                    <option value="pg_owner">I'm a Property Owner</option>
+                  </select>
+                  <span style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", fontSize: 10, color: "#9CA3AF", pointerEvents: "none" }}>▼</span>
                 </div>
-              </div>
+              </InputWrapper>
+            </div>
 
-              {/* Email */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-[#0fb478] ml-1">Email Address</label>
-                <div className="relative group">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#cedcd7] group-focus-within:text-[#0fb478] transition-colors" />
-                  <input
-                    type="email" name="email" value={form.email} onChange={handleChange}
-                    className="w-full rounded-2xl border-2 border-[#f0f9f6] bg-[#f9fbfb] py-4 pl-12 pr-4 font-bold text-[#1a332e] outline-none focus:border-[#0fb478] focus:bg-white transition-all"
-                    placeholder="john@example.com" required
-                  />
-                </div>
-              </div>
-
-              {/* Phone */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-[#0fb478] ml-1">Phone Number</label>
-                <div className="relative group">
-                  <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#cedcd7] group-focus-within:text-[#0fb478] transition-colors" />
-                  <input
-                    name="phone" value={form.phone} onChange={handleChange}
-                    pattern="\d{10}"
-                    className="w-full rounded-2xl border-2 border-[#f0f9f6] bg-[#f9fbfb] py-4 pl-12 pr-4 font-bold text-[#1a332e] outline-none focus:border-[#0fb478] focus:bg-white transition-all"
-                    placeholder="9876543210" required
-                  />
-                </div>
-              </div>
-
-              {/* Account Type */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-[#0fb478] ml-1">Account Type</label>
-                <select
-                  name="role" value={form.role} onChange={handleChange}
-                  className="w-full rounded-2xl border-2 border-[#f0f9f6] bg-[#f9fbfb] py-[1.1rem] px-4 font-black text-[#1a332e] outline-none focus:border-[#0fb478] transition-all cursor-pointer appearance-none"
-                >
-                  <option value="user">I'm looking for a PG</option>
-                  <option value="pg_owner">I'm a Property Owner</option>
-                </select>
-              </div>
-
-              {/* Password */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-[#0fb478] ml-1">Password</label>
-                <div className="relative group">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#cedcd7] group-focus-within:text-[#0fb478] transition-colors" />
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    name="password" value={form.password} onChange={handleChange}
-                    className="w-full rounded-2xl border-2 border-[#f0f9f6] bg-[#f9fbfb] py-4 pl-12 pr-12 font-bold text-[#1a332e] outline-none focus:border-[#0fb478] focus:bg-white transition-all"
-                    placeholder="••••••••" minLength={6} required
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+              {/* Password Field */}
+              <InputWrapper>
+                <Label>Password</Label>
+                <div style={{ position: "relative" }}>
+                  <Input
+                    icon="🔒"
+                    name="password"
+                    type={showPw ? "text" : "password"}
+                    required
+                    placeholder="••••••••"
+                    value={form.password}
+                    onChange={handleChange}
+                    disabled={loading || success}
                   />
                   <button
-                    type="button" onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[#cedcd7] hover:text-[#0fb478] p-1"
+                    type="button"
+                    onClick={() => setShowPw(p => !p)}
+                    style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "#9CA3AF" }}
                   >
-                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
                   </button>
                 </div>
-              </div>
+              </InputWrapper>
 
-              {/* Confirm Password */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-[#0fb478] ml-1">Confirm Password</label>
-                <div className="relative group">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#cedcd7] group-focus-within:text-[#0fb478] transition-colors" />
-                  <input
+              {/* Confirm Password Field */}
+              <InputWrapper>
+                <Label>Confirm Password</Label>
+                <div style={{ position: "relative" }}>
+                  <Input
+                    icon="🔄"
                     type="password"
+                    required
+                    placeholder="••••••••"
                     value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full rounded-2xl border-2 border-[#f0f9f6] bg-[#f9fbfb] py-4 pl-12 pr-4 font-bold text-[#1a332e] outline-none focus:border-[#0fb478] focus:bg-white transition-all"
-                    placeholder="••••••••" required
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    disabled={loading || success}
+                    style={{
+                      borderColor: confirmPassword && form.password !== confirmPassword ? "#EF4444" : undefined
+                    }}
                   />
                 </div>
-              </div>
+              </InputWrapper>
             </div>
 
-            <button
-              type="submit" disabled={loading}
-              className="group flex w-full items-center justify-center gap-3 rounded-2xl bg-[#1a332e] py-5 text-lg font-black text-white transition-all hover:bg-black hover:shadow-2xl hover:shadow-emerald-900/20 active:scale-[0.98] disabled:opacity-50"
-            >
-              {loading ? (
-                <Loader2 className="animate-spin" />
+            {/* Action Submit Button */}
+            <PrimaryButton type="submit" loading={loading} disabled={success}>
+              {success ? (
+                <><CheckCircle2 size={15} /> Account Staged</>
               ) : (
-                <><span>Create Account</span><ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" /></>
+                "Create Account →"
               )}
-            </button>
+            </PrimaryButton>
+
           </form>
 
-          <p className="text-center text-sm font-bold text-[#4a635d]">
+          {/* Action Footer Links */}
+          <p style={{ textAlign: "center", marginTop: 20, fontSize: 14, color: "#6B7280" }}>
             Already a member?{" "}
-            <Link to="/login" className="text-[#0fb478] hover:underline underline-offset-4">Log In</Link>
+            <Link
+              to="/login"
+              style={{ color: "#1DB47F", fontWeight: 700, textDecoration: "none" }}
+            >
+              Log In
+            </Link>
           </p>
+
         </div>
       </div>
     </div>

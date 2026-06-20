@@ -196,8 +196,8 @@ export default function VerifyEmail() {
         {/* Back to login when success */}
         {success && (
           <div style={{ textAlign: "center", marginTop: 20 }}>
-            <Link to="/login" style={{ fontSize: 13, color: "#6B7280", textDecoration: "none", fontWeight: 600 }}>
-              ← Back to Login
+            <Link to="/register" style={{ fontSize: 13, color: "#6B7280", textDecoration: "none", fontWeight: 600 }}>
+              ← Back to register
             </Link>
           </div>
         )}
