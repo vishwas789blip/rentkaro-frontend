@@ -9,23 +9,19 @@ import LeftPanel     from "@/components/LeftPanel";
 import PrimaryButton from "@/components/PrimaryButton";
 import Alert         from "@/components/Alert";
 import { Input, Label, InputWrapper } from "@/components/FormInput";
+import Logo from "@/components/Logo";
 
-// ── LeftPanel needs a Step type 
+// ── LeftPanel needs a Step type (hidden on mobile) ────────────
 const LoginLeftPanel = () => (
-  <div style={{
-    width: "40%",
-    background: "linear-gradient(145deg, #0f9660 0%, #1DB47F 60%, #16a871 100%)",
-    padding: "48px 40px",
-    display: "flex", flexDirection: "column", justifyContent: "space-between",
-    position: "relative", overflow: "hidden", minHeight: "100vh",
-  }}>
+  <div className="hidden lg:flex w-2/5 min-h-screen flex-col justify-between relative overflow-hidden p-10 xl:p-12"
+    style={{ background: "linear-gradient(145deg, #0f9660 0%, #1DB47F 60%, #16a871 100%)" }}>
     {/* Decorative blobs */}
     <div style={{ position: "absolute", top: -60,  right: -60, width: 220, height: 220, borderRadius: "50%", background: "rgba(255,255,255,0.07)" }} />
     <div style={{ position: "absolute", bottom: -40, left: -40, width: 160, height: 160, borderRadius: "50%", background: "rgba(255,255,255,0.05)" }} />
 
     {/* Logo */}
     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-      <div style={{ width: 36, height: 36, background: "rgba(255,255,255,0.2)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>🏠</div>
+      <Logo size={36} />
       <Link to="/" style={{ color: "#fff", fontSize: 20, fontWeight: 700, fontFamily: "Georgia, serif", textDecoration: "none" }}>
         RentKaroo
       </Link>
@@ -52,6 +48,16 @@ const LoginLeftPanel = () => (
     </div>
 
     <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 12, fontFamily: "Inter, system-ui, sans-serif" }}>EST. 2026</p>
+  </div>
+);
+
+// ── Mobile top bar (visible only on small screens) ────────────────
+const MobileTopBar = () => (
+  <div className="flex lg:hidden items-center gap-2 px-5 py-4 bg-white border-b border-gray-100">
+    <Logo size={32} />
+    <Link to="/" style={{ color: "#111827", fontSize: 17, fontWeight: 700, fontFamily: "Georgia, serif", textDecoration: "none" }}>
+      RentKaroo
+    </Link>
   </div>
 );
 
@@ -98,22 +104,22 @@ export default function Login() {
   };
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", fontFamily: "Inter, system-ui, sans-serif" }}>
+    <div className="flex flex-col lg:flex-row min-h-screen" style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
 
-      {/* ── Left branding panel (same style as ForgotPassword) ── */}
+      {/* ── Mobile-only top bar ── */}
+      <MobileTopBar />
+
+      {/* ── Left branding panel (desktop only, same style as ForgotPassword) ── */}
       <LoginLeftPanel />
 
       {/* ── Right form panel ── */}
-      <div style={{
-        flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
-        padding: "48px 52px", background: "#fff", overflowY: "auto",
-      }}>
-        <div style={{ width: "100%", maxWidth: 420 }}>
+      <div className="flex-1 flex items-center justify-center bg-white px-5 py-8 sm:px-8 lg:px-12 lg:py-12">
+        <div className="w-full max-w-[420px]">
 
-          <h2 style={{ fontSize: 28, fontWeight: 800, color: "#111827", margin: "0 0 6px", fontFamily: "Georgia, serif" }}>
+          <h2 style={{ fontSize: 24, fontWeight: 800, color: "#111827", margin: "0 0 6px", fontFamily: "Georgia, serif" }} className="sm:text-[28px]">
             Sign In
           </h2>
-          <p style={{ color: "#6B7280", fontSize: 14, marginBottom: 28, lineHeight: 1.6 }}>
+          <p style={{ color: "#6B7280", fontSize: 14, marginBottom: 24, lineHeight: 1.6 }}>
             Enter your credentials to access your account.
           </p>
 
@@ -142,7 +148,7 @@ export default function Login() {
 
             {/* Password */}
             <InputWrapper>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 7 }}>
+              <div className="flex flex-wrap justify-between items-center gap-2 mb-[7px]">
                 <Label>Password</Label>
                 <Link
                   to="/forgotPassword"

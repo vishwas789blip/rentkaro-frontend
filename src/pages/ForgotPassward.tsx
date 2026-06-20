@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { authAPI } from '@/api';
 import LeftPanel from '@/components/LeftPanel';
+import Logo from '@/components/Logo';
 import StepIndicator from '@/components/StepIndicator';
 import OTPBoxes from '@/components/OTPBoxes';
 import PasswordStrengthBar from '@/components/PasswordStrengthBar';
@@ -18,6 +20,16 @@ import {
 } from '@/lib/utils';
 
 type Step = 'SEND_OTP' | 'VERIFY_OTP' | 'NEW_PASSWORD' | 'SUCCESS';
+
+// ── Mobile top bar (visible only on small screens) ────────────────
+const MobileTopBar = () => (
+  <div className="flex lg:hidden items-center gap-2 px-5 py-4 bg-white border-b border-gray-100">
+    <Logo size={32} />
+    <Link to="/" style={{ color: "#111827", fontSize: 17, fontWeight: 700, fontFamily: "Georgia, serif", textDecoration: "none" }}>
+      RentKaroo
+    </Link>
+  </div>
+);
 
 // ── Component ─────────────────────────────────────────────────
 const ForgotPassword: React.FC = () => {
@@ -131,17 +143,18 @@ const ForgotPassword: React.FC = () => {
         .rk-step { animation: rk-fade 0.3s ease; }
       `}</style>
 
-      <div style={{ minHeight: '100vh', display: 'flex', fontFamily: 'Inter, system-ui, sans-serif' }}>
+      <div className="flex flex-col lg:flex-row" style={{ minHeight: '100vh', fontFamily: 'Inter, system-ui, sans-serif' }}>
 
-        {/* ── Left branding panel ── */}
+        {/* ── Mobile-only top bar ── */}
+        <MobileTopBar />
+
+        {/* ── Left branding panel (desktop only, handled inside LeftPanel) ── */}
         <LeftPanel step={step} />
 
         {/* ── Right form panel ── */}
-        <div style={{
-          flex: 1, padding: '48px 52px',
-          display: 'flex', flexDirection: 'column', justifyContent: 'center',
-          background: '#fff', overflowY: 'auto',
-        }}>
+        <div className="flex-1 flex flex-col justify-center bg-white px-5 py-8 sm:px-8 lg:px-12 lg:py-12 overflow-y-auto">
+          <div className="w-full max-w-[420px] mx-auto lg:mx-0">
+
           {step !== 'SUCCESS' && <StepIndicator current={step} />}
 
           {message && <Alert type="success" message={message} />}
@@ -150,10 +163,10 @@ const ForgotPassword: React.FC = () => {
           {/* ── STEP 1: Email ── */}
           {step === 'SEND_OTP' && (
             <div className="rk-step">
-              <h2 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 6px', color: '#111827', fontFamily: 'Georgia, serif' }}>
+              <h2 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 6px', color: '#111827', fontFamily: 'Georgia, serif' }} className="sm:text-[28px]">
                 Password Recovery
               </h2>
-              <p style={{ color: '#6B7280', marginBottom: 28, fontSize: 14, lineHeight: 1.6 }}>
+              <p style={{ color: '#6B7280', marginBottom: 24, fontSize: 14, lineHeight: 1.6 }}>
                 Enter your registered email and we'll send a one-time code.
               </p>
               <form onSubmit={handleSendOTP}>
@@ -184,10 +197,10 @@ const ForgotPassword: React.FC = () => {
           {/* ── STEP 2: OTP ── */}
           {step === 'VERIFY_OTP' && (
             <div className="rk-step">
-              <h2 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 6px', color: '#111827', fontFamily: 'Georgia, serif' }}>
+              <h2 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 6px', color: '#111827', fontFamily: 'Georgia, serif' }} className="sm:text-[28px]">
                 Enter your OTP
               </h2>
-              <p style={{ color: '#6B7280', marginBottom: 28, fontSize: 14, lineHeight: 1.6 }}>
+              <p style={{ color: '#6B7280', marginBottom: 24, fontSize: 14, lineHeight: 1.6 }}>
                 We sent a 6-digit code to{' '}
                 <strong style={{ color: '#111827' }}>{maskEmail(email)}</strong>.
                 {countdown > 0 && (
@@ -203,7 +216,7 @@ const ForgotPassword: React.FC = () => {
                   Verify OTP →
                 </PrimaryButton>
               </form>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 16 }}>
+              <div className="flex flex-wrap justify-between gap-2" style={{ marginTop: 16 }}>
                 <button
                   onClick={() => { setStep('SEND_OTP'); clear(); }}
                   style={{ background: 'none', border: 'none', color: '#6B7280', fontSize: 13, cursor: 'pointer', padding: 0 }}
@@ -230,10 +243,10 @@ const ForgotPassword: React.FC = () => {
           {/* ── STEP 3: New Password ── */}
           {step === 'NEW_PASSWORD' && (
             <div className="rk-step">
-              <h2 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 6px', color: '#111827', fontFamily: 'Georgia, serif' }}>
+              <h2 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 6px', color: '#111827', fontFamily: 'Georgia, serif' }} className="sm:text-[28px]">
                 Create New Password
               </h2>
-              <p style={{ color: '#6B7280', marginBottom: 28, fontSize: 14, lineHeight: 1.6 }}>
+              <p style={{ color: '#6B7280', marginBottom: 24, fontSize: 14, lineHeight: 1.6 }}>
                 Choose a strong password you haven't used before.
               </p>
               <form onSubmit={handleResetPassword}>
@@ -297,7 +310,7 @@ const ForgotPassword: React.FC = () => {
           {step === 'SUCCESS' && (
             <div className="rk-step" style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 64, marginBottom: 16 }}>🎉</div>
-              <h2 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 10px', color: '#111827', fontFamily: 'Georgia, serif' }}>
+              <h2 style={{ fontSize: 24, fontWeight: 800, margin: '0 0 10px', color: '#111827', fontFamily: 'Georgia, serif' }} className="sm:text-[28px]">
                 Password Updated!
               </h2>
               <p style={{ color: '#6B7280', fontSize: 15, lineHeight: 1.6, marginBottom: 32 }}>
@@ -309,6 +322,7 @@ const ForgotPassword: React.FC = () => {
             </div>
           )}
 
+          </div>
         </div>
       </div>
     </>

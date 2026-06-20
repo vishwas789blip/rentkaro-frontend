@@ -1,4 +1,5 @@
 import React from 'react';
+import Logo from '@/components/Logo';
 
 type Step = 'SEND_OTP' | 'VERIFY_OTP' | 'NEW_PASSWORD' | 'SUCCESS';
 
@@ -12,11 +13,11 @@ const LeftPanel = ({ step }: { step: Step }) => {
   const { headline, sub, icon } = content[step];
 
   return (
-    <div style={{
+    <div className="hidden lg:flex" style={{
       width: '40%',
       background: 'linear-gradient(145deg, #0f9660 0%, #1DB47F 60%, #16a871 100%)',
       padding: '48px 40px',
-      display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+      flexDirection: 'column', justifyContent: 'space-between',
       position: 'relative', overflow: 'hidden', minHeight: '100vh',
     }}>
       {/* Decorative blobs */}
@@ -26,13 +27,7 @@ const LeftPanel = ({ step }: { step: Step }) => {
       {/* Top: logo + copy */}
       <div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 48 }}>
-          <div style={{
-            width: 36, height: 36,
-            background: 'rgba(255,255,255,0.2)',
-            borderRadius: 8,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 18,
-          }}>🏠</div>
+          <Logo size={36} />
           <span style={{ color: '#fff', fontSize: 20, fontWeight: 700, fontFamily: 'Georgia, serif' }}>
             RentKaroo
           </span>

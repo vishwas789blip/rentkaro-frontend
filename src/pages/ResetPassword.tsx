@@ -8,22 +8,18 @@ import { authAPI } from "@/api";
 import PrimaryButton from "@/components/PrimaryButton";
 import Alert         from "@/components/Alert";
 import { Input, Label, InputWrapper } from "@/components/FormInput";
+import Logo from "@/components/Logo";
 
-// ── Matching Structured Side Panel ────────────────────────────
+// ── Matching Structured Side Panel (hidden on mobile) ────────────
 const SecurityLeftPanel = () => (
-  <div style={{
-    width: "40%",
-    background: "linear-gradient(145deg, #0f9660 0%, #1DB47F 60%, #16a871 100%)",
-    padding: "48px 40px",
-    display: "flex", flexDirection: "column", justifyContent: "space-between",
-    position: "relative", overflow: "hidden", minHeight: "100vh",
-  }}>
+  <div className="hidden lg:flex w-2/5 min-h-screen flex-col justify-between relative overflow-hidden p-10 xl:p-12"
+    style={{ background: "linear-gradient(145deg, #0f9660 0%, #1DB47F 60%, #16a871 100%)" }}>
     <div style={{ position: "absolute", top: -60, right: -60, width: 220, height: 220, borderRadius: "50%", background: "rgba(255,255,255,0.07)" }} />
     <div style={{ position: "absolute", bottom: -40, left: -40, width: 160, height: 160, borderRadius: "50%", background: "rgba(255,255,255,0.05)" }} />
 
     {/* Brand Logo */}
     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-      <div style={{ width: 36, height: 36, background: "rgba(255,255,255,0.2)", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>🏠</div>
+      <Logo size={36} />
       <Link to="/" style={{ color: "#fff", fontSize: 20, fontWeight: 700, fontFamily: "Georgia, serif", textDecoration: "none" }}>
         RentKaroo
       </Link>
@@ -50,6 +46,16 @@ const SecurityLeftPanel = () => (
     </div>
 
     <p style={{ color: "rgba(255,255,255,0.5)", fontSize: 12, fontFamily: "Inter, system-ui, sans-serif" }}>SECURE ENVIRONMENT</p>
+  </div>
+);
+
+// ── Mobile top bar (visible only on small screens) ────────────────
+const MobileTopBar = () => (
+  <div className="flex lg:hidden items-center gap-2 px-5 py-4 bg-white border-b border-gray-100">
+    <Logo size={32} />
+    <Link to="/" style={{ color: "#111827", fontSize: 17, fontWeight: 700, fontFamily: "Georgia, serif", textDecoration: "none" }}>
+      RentKaroo
+    </Link>
   </div>
 );
 
@@ -88,7 +94,7 @@ export default function ResetPassword() {
 
       setSuccess(true);
       toast.success("Password changed successfully 🎉");
-      
+
       setOldPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -102,22 +108,22 @@ export default function ResetPassword() {
   };
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", fontFamily: "Inter, system-ui, sans-serif" }}>
-      
-      {/* ── Left matching branding panel ── */}
+    <div className="flex flex-col lg:flex-row min-h-screen" style={{ fontFamily: "Inter, system-ui, sans-serif" }}>
+
+      {/* ── Mobile-only top bar ── */}
+      <MobileTopBar />
+
+      {/* ── Left matching branding panel (desktop only) ── */}
       <SecurityLeftPanel />
 
       {/* ── Right form panel ── */}
-      <div style={{
-        flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
-        padding: "48px 52px", background: "#fff", overflowY: "auto",
-      }}>
-        <div style={{ width: "100%", maxWidth: 420 }}>
-          
-          <h2 style={{ fontSize: 28, fontWeight: 800, color: "#111827", margin: "0 0 6px", fontFamily: "Georgia, serif" }}>
+      <div className="flex-1 flex items-center justify-center bg-white px-5 py-8 sm:px-8 lg:px-12 lg:py-12">
+        <div className="w-full max-w-[420px]">
+
+          <h2 style={{ fontSize: 24, fontWeight: 800, color: "#111827", margin: "0 0 6px", fontFamily: "Georgia, serif" }} className="sm:text-[28px]">
             Change Password
           </h2>
-          <p style={{ color: "#6B7280", fontSize: 14, marginBottom: 28, lineHeight: 1.6 }}>
+          <p style={{ color: "#6B7280", fontSize: 14, marginBottom: 24, lineHeight: 1.6 }}>
             Update your credentials below to keep your account safe.
           </p>
 
@@ -126,7 +132,7 @@ export default function ResetPassword() {
           {success && <Alert type="success" message="Password updated! Routing back to profile..." />}
 
           <form onSubmit={handleChangePassword}>
-            
+
             {/* Current Password Field */}
             <InputWrapper>
               <Label>Current Password</Label>
@@ -174,7 +180,7 @@ export default function ResetPassword() {
 
               {/* Matching Password Strength Visualizer */}
               {newPassword && (
-                <div style={{ height: 3, rounded: 2, background: "#E5E7EB", overflow: "hidden", marginTop: 8 }}>
+                <div style={{ height: 3, borderRadius: 2, background: "#E5E7EB", overflow: "hidden", marginTop: 8 }}>
                   <div
                     style={{
                       height: "100%",
