@@ -1,5 +1,5 @@
 import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
-import { useEffect, useState, useMemo, useRef, lazy, Suspense } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback, lazy, Suspense } from "react";
 import MainLayout from "@/layouts/MainLayout";
 
 // FIX 1: Import from correct path — @/services/api not @/api
@@ -36,7 +36,8 @@ const ListingDetail = () => {
   const shareRef = useRef<HTMLDivElement>(null);
 
   // ── Fetch reviews ────────────────────────────────────────
-  const fetchReviews = async () => {
+  const fetchReviews = useCallback(async () => {
+    if (!id) return;
     try {
       const res = await reviewAPI.getByListing(id);
       // FIX 2: Handle all possible response shapes from backend
@@ -50,7 +51,7 @@ const ListingDetail = () => {
     } catch {
       setReviews([]);
     }
-  };
+  }, [id]);
 
   // ── Fetch listing + reviews ───────────────────────────────
   useEffect(() => {
@@ -80,7 +81,7 @@ const ListingDetail = () => {
     };
 
     fetchData();
-  }, [id]);
+  }, [id, fetchReviews]);
 
   // ── Close share dropdown on outside click ────────────────
   useEffect(() => {

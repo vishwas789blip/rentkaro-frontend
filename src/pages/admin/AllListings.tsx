@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { apiClient } from "@/api";
@@ -23,7 +23,7 @@ export default function AllListings() {
   const [loading, setLoading]   = useState(true);
   const [filter, setFilter]     = useState<"all" | "pending" | "approved" | "rejected">("all");
 
-  const fetchListings = async () => {
+  const fetchListings = useCallback(async () => {
     try {
       setLoading(true);
       // FIX: Use admin endpoint — /admin/listings (not public /pg-listings)
@@ -37,9 +37,9 @@ export default function AllListings() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter]);
 
-  useEffect(() => { fetchListings(); }, [filter]);
+  useEffect(() => { fetchListings(); }, [fetchListings]);
 
   const handleApprove = async (id: string) => {
     try {

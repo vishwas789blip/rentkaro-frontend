@@ -18,7 +18,7 @@ const userLinks = [
 const ownerLinks = [
   { to: "/dashboard/owner", label: "Overview", icon: LayoutDashboard },
   { to: "/dashboard/owner/listings", label: "My Listings", icon: List },
-  { to: "/dashboard/owner/createlisting", label: "Add Listing", icon: PlusCircle },
+  { to: "/dashboard/owner/createListing", label: "Add Listing", icon: PlusCircle },
   { to: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 

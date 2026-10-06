@@ -162,8 +162,13 @@ function BookingCard({ booking }: { booking: Booking }) {
             </span>
           </div>
           <button
-            onClick={() => navigate(`/booking-details/${booking._id}`)}
+            onClick={() => {
+              const listingId = (booking.pgListing as any)?._id;
+              if (listingId) navigate(`/listings/${listingId}`);
+              else navigate("/listings");
+            }}
             className="h-14 w-14 bg-[#1a332e] text-white rounded-[1.2rem] flex items-center justify-center hover:bg-emerald-600 transition-all shadow-lg active:scale-90"
+            title="View PG Listing"
           >
             <ArrowRight size={24} />
           </button>

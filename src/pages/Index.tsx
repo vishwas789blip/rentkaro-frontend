@@ -38,7 +38,7 @@ const Index = () => {
     const fetchListings = async () => {
       try {
         const res = await listingAPI.getAll();
-        const data = res.data?.data || res.data || [];
+        const data = res.data?.data?.listings || res.data?.data || res.data || [];
         const safeData = Array.isArray(data) ? data : [];
         const sorted = [...safeData].sort((a, b) => (b.rating?.average || 0) - (a.rating?.average || 0));
         setPopularListings(sorted.slice(0, 3));

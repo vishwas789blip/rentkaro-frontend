@@ -142,12 +142,21 @@ const App = () => {
                     }
                   />
 
+                  <Route
+                    path="/dashboard/settings"
+                    element={
+                      <ProtectedRoute allowedRoles={["user", "pg_owner", "admin"]}>
+                        <UserDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+
                   {/* ================= OWNER DASHBOARD ================= */}
 
                   <Route
                     path="/dashboard/owner"
                     element={
-                      <ProtectedRoute allowedRoles={["pg_owner", ]}>
+                      <ProtectedRoute allowedRoles={["pg_owner"]}>
                         <OwnerDashboard />
                       </ProtectedRoute>
                     }
@@ -155,6 +164,15 @@ const App = () => {
 
                   <Route
                     path="/dashboard/owner/createListing"
+                    element={
+                      <ProtectedRoute allowedRoles={["pg_owner", "admin"]}>
+                        <CreateListing />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/dashboard/owner/createlisting"
                     element={
                       <ProtectedRoute allowedRoles={["pg_owner", "admin"]}>
                         <CreateListing />
@@ -181,6 +199,10 @@ const App = () => {
 
                   <Route
                     path="/forgotPassword"
+                    element={<ForgotPassword />}
+                  />
+                  <Route
+                    path="/forgot-password"
                     element={<ForgotPassword />}
                   />
                   {/* ================= ADMIN DASHBOARD ================= */}

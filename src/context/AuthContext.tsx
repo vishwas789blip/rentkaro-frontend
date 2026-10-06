@@ -268,7 +268,9 @@ export const AuthProvider = ({
     async (): Promise<void> => {
       try {
         await authAPI.logout();
-      } catch {}
+      } catch {
+        /* ignore error on logout */
+      }
 
       localStorage.removeItem(
         "accessToken"

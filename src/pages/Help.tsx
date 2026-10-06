@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import MainLayout from "@/layouts/MainLayout";
 import { 
   ChevronDown, Send, MessageCircle, Clock, 
@@ -24,14 +24,12 @@ export default function Help() {
   ];
 
   // --- SAFE TICKETS FETCH LOGIC ---
-  const fetchMyTickets = async () => {
+  const fetchMyTickets = useCallback(async () => {
     if (!user) return; // Don't fetch if not logged in
     setHistoryLoading(true);
     try {
       const res = await supportAPI.getUserTickets();
       
-      // Kuch backends res.data.data mein array dete hain, aur kuch res.data.data.tickets mein.
-      // Hum dono cases ko handle kar rahe hain safe parsing se:
       const incomingData = res.data?.data;
       const ticketsArray = Array.isArray(incomingData) 
         ? incomingData 
@@ -44,11 +42,11 @@ export default function Help() {
     } finally { 
       setHistoryLoading(false); 
     }
-  };
+  }, [user]);
 
   useEffect(() => { 
     if (activeTab === "history") fetchMyTickets(); 
-  }, [activeTab, user]);
+  }, [activeTab, fetchMyTickets]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

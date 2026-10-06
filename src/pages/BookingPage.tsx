@@ -86,7 +86,7 @@ const handleBooking = async () => {
     });
 
     toast.success("Booking request sent successfully!");
-    navigate("/dashboard/user");
+    navigate("/dashboard/user/bookings");
   } catch (err: any) {
     // This will now catch if any other fields are missing
     toast.error(err?.response?.data?.message || "Booking failed. Please try again.");

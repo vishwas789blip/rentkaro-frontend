@@ -37,13 +37,7 @@ export const listingAPI = {
   ) =>
     apiClient.post(
       "/pg-listings",
-      data,
-      {
-        headers: {
-          "Content-Type":
-            "multipart/form-data",
-        },
-      }
+      data
     ),
 
   /* =========================
@@ -56,13 +50,7 @@ export const listingAPI = {
   ) =>
     apiClient.put(
       `/pg-listings/${id}`,
-      data,
-      {
-        headers: {
-          "Content-Type":
-            "multipart/form-data",
-        },
-      }
+      data
     ),
 
   /* =========================
